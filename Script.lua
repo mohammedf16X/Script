@@ -1,6 +1,6 @@
 -- ========================================
 -- 🌱 ULTIMATE GROW A GARDEN SCRIPT 🌱
--- ⚡ أقوى سكريبت متطور - يعمل 100% ⚡
+-- ⚡ Fixed and Working Version ⚡
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -13,28 +13,27 @@ local CoreGui = game:GetService("CoreGui")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- انتظار تحميل اللعبة
+-- Wait for game to load
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
-wait(1)
+wait(2)
 
 -- ========================================
--- 🎨 THEMES & COLORS
+-- 🎨 THEME COLORS
 -- ========================================
 
-local Theme = {
-    Primary = Color3.fromRGB(15, 15, 20),
-    Secondary = Color3.fromRGB(25, 25, 35),
+local Colors = {
+    Background = Color3.fromRGB(20, 20, 25),
+    Secondary = Color3.fromRGB(30, 30, 40),
     Accent = Color3.fromRGB(0, 200, 100),
-    Success = Color3.fromRGB(34, 197, 94),
-    Warning = Color3.fromRGB(251, 191, 36),
-    Error = Color3.fromRGB(239, 68, 68),
+    Success = Color3.fromRGB(40, 200, 80),
+    Warning = Color3.fromRGB(255, 200, 50),
+    Error = Color3.fromRGB(255, 80, 80),
     Text = Color3.fromRGB(255, 255, 255),
-    TextDim = Color3.fromRGB(156, 163, 175),
-    Border = Color3.fromRGB(60, 60, 80),
-    Hover = Color3.fromRGB(40, 40, 55)
+    TextDim = Color3.fromRGB(180, 180, 180),
+    Border = Color3.fromRGB(60, 60, 80)
 }
 
 -- ========================================
@@ -42,48 +41,46 @@ local Theme = {
 -- ========================================
 
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-local screenSize = workspace.CurrentCamera.ViewportSize
 
 -- ========================================
--- 💾 SCRIPT DATA & VARIABLES
+-- 💾 SCRIPT VARIABLES
 -- ========================================
 
-local ScriptConfig = {
-    version = "3.5.0 ULTIMATE",
+local ScriptData = {
+    version = "4.0.0",
     isVisible = false,
     playerSpeed = 100,
     stats = {
         itemsBought = 0,
-        runtime = 0,
         startTime = tick()
     }
 }
 
-local ActiveStates = {
+local IsActive = {
     speed = false,
     seeds = {},
     gear = {},
     pets = {}
 }
 
-local RunningLoops = {
+local Loops = {
     seeds = {},
     gear = {},
     pets = {}
 }
 
 -- ========================================
--- 🌱 GAME DATA - محدث بالكامل
+-- 🌱 GAME ITEMS DATA
 -- ========================================
 
-local GameItems = {
+local Items = {
     seeds = {
         "Carrot", "Lettuce", "Potato", "Tomato", "Onion", "Cabbage", "Corn", "Wheat",
         "Radish", "Beetroot", "Spinach", "Broccoli", "Cauliflower", "Cucumber", "Pumpkin",
         "Watermelon", "Strawberry", "Blueberry", "Raspberry", "Blackberry", "Cherry",
         "Apple", "Orange", "Banana", "Grape", "Lemon", "Lime", "Peach", "Pear", "Plum",
         "Dragon Pepper", "Moon Mango", "Maple Apple", "Crystal Berry", "Golden Wheat",
-        "Diamond Carrot", "Ruby Tomato", "Emerald Lettuce", "Sapphire Grape", "Phoenix Berry"
+        "Diamond Carrot", "Ruby Tomato", "Emerald Lettuce", "Sapphire Grape"
     },
     
     gear = {
@@ -115,7 +112,7 @@ local function buySeed(seedName)
     pcall(function()
         local args = {[1] = seedName}
         ReplicatedStorage.GameEvents.BuySeedStock:FireServer(unpack(args))
-        ScriptConfig.stats.itemsBought = ScriptConfig.stats.itemsBought + 1
+        ScriptData.stats.itemsBought = ScriptData.stats.itemsBought + 1
     end)
 end
 
@@ -123,7 +120,7 @@ local function buyGear(gearName)
     pcall(function()
         local args = {[1] = gearName}
         ReplicatedStorage.GameEvents.BuyGearStock:FireServer(unpack(args))
-        ScriptConfig.stats.itemsBought = ScriptConfig.stats.itemsBought + 1
+        ScriptData.stats.itemsBought = ScriptData.stats.itemsBought + 1
     end)
 end
 
@@ -131,202 +128,94 @@ local function buyPetEgg(eggName)
     pcall(function()
         local args = {[1] = eggName}
         ReplicatedStorage.GameEvents.BuyPetEgg:FireServer(unpack(args))
-        ScriptConfig.stats.itemsBought = ScriptConfig.stats.itemsBought + 1
+        ScriptData.stats.itemsBought = ScriptData.stats.itemsBought + 1
     end)
 end
 
 -- ========================================
--- 🎨 UI CREATION FUNCTIONS
+-- 🎨 UI HELPER FUNCTIONS
 -- ========================================
 
-local function addCorners(obj, radius)
+local function addRoundCorners(obj, radius)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, radius or 8)
     corner.Parent = obj
-    return corner
 end
 
-local function addStroke(obj, color, thickness)
+local function addBorder(obj, color, thickness)
     local stroke = Instance.new("UIStroke")
-    stroke.Color = color or Theme.Border
+    stroke.Color = color or Colors.Border
     stroke.Thickness = thickness or 1
     stroke.Parent = obj
-    return stroke
 end
 
-local function addGradient(obj, colors, rotation)
+local function addGradient(obj, color1, color2, rotation)
     local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new(colors)
+    gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, color1),
+        ColorSequenceKeypoint.new(1, color2)
+    }
     gradient.Rotation = rotation or 0
     gradient.Parent = obj
-    return gradient
 end
 
-local function createIcon(parent, size, position, imageId)
-    local icon = Instance.new("ImageLabel")
-    icon.Parent = parent
-    icon.Size = UDim2.new(0, size, 0, size)
-    icon.Position = position
-    icon.BackgroundTransparency = 1
-    icon.Image = imageId or "rbxassetid://7072715489"
-    icon.ScaleType = Enum.ScaleType.Fit
-    return icon
-end
+-- ========================================
+-- 📱 MOBILE SHORTCUT BUTTON
+-- ========================================
 
-local function createTextLabel(parent, text, size, position, textSize, font, color)
-    local label = Instance.new("TextLabel")
-    label.Parent = parent
-    label.Size = size
-    label.Position = position
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = color or Theme.Text
-    label.TextSize = textSize or 14
-    label.Font = font or Enum.Font.GothamSemibold
-    label.TextWrapped = true
-    return label
-end
-
-local function createButton(parent, text, size, position, onClick, style)
-    style = style or "primary"
-    
-    local button = Instance.new("TextButton")
-    button.Parent = parent
-    button.Size = size
-    button.Position = position
-    button.BackgroundColor3 = style == "success" and Theme.Success or 
-                              style == "danger" and Theme.Error or Theme.Accent
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.TextColor3 = Theme.Text
-    button.TextSize = isMobile and 16 or 14
-    button.Font = Enum.Font.GothamBold
-    button.AutoButtonColor = false
-    
-    addCorners(button, 8)
-    addStroke(button, Theme.Border)
-    
-    -- Hover effects
-    local originalColor = button.BackgroundColor3
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.new(
-                math.min(originalColor.R + 0.1, 1),
-                math.min(originalColor.G + 0.1, 1),
-                math.min(originalColor.B + 0.1, 1)
-            )
-        }):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = originalColor
-        }):Play()
-    end)
-    
-    if onClick then
-        button.MouseButton1Click:Connect(onClick)
+local function createShortcutButton()
+    -- Remove existing shortcut
+    if CoreGui:FindFirstChild("GrowGardenShortcut") then
+        CoreGui:FindFirstChild("GrowGardenShortcut"):Destroy()
     end
     
-    return button
-end
-
-local function createToggle(parent, position, size, onToggle, startState)
-    startState = startState or false
-    
-    local toggleFrame = Instance.new("Frame")
-    toggleFrame.Parent = parent
-    toggleFrame.Size = size or UDim2.new(0, 50, 0, 25)
-    toggleFrame.Position = position
-    toggleFrame.BackgroundColor3 = startState and Theme.Success or Theme.TextDim
-    toggleFrame.BorderSizePixel = 0
-    
-    addCorners(toggleFrame, 12)
-    
-    local toggleButton = Instance.new("Frame")
-    toggleButton.Parent = toggleFrame
-    toggleButton.Size = UDim2.new(0, 21, 0, 21)
-    toggleButton.Position = startState and UDim2.new(0, 27, 0, 2) or UDim2.new(0, 2, 0, 2)
-    toggleButton.BackgroundColor3 = Theme.Text
-    toggleButton.BorderSizePixel = 0
-    
-    addCorners(toggleButton, 10)
-    
-    local clickButton = Instance.new("TextButton")
-    clickButton.Parent = toggleFrame
-    clickButton.Size = UDim2.new(1, 0, 1, 0)
-    clickButton.BackgroundTransparency = 1
-    clickButton.Text = ""
-    
-    local isActive = startState
-    
-    clickButton.MouseButton1Click:Connect(function()
-        isActive = not isActive
-        
-        TweenService:Create(toggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Back), {
-            Position = isActive and UDim2.new(0, 27, 0, 2) or UDim2.new(0, 2, 0, 2)
-        }):Play()
-        
-        TweenService:Create(toggleFrame, TweenInfo.new(0.3), {
-            BackgroundColor3 = isActive and Theme.Success or Theme.TextDim
-        }):Play()
-        
-        if onToggle then
-            onToggle(isActive)
-        end
-    end)
-    
-    return toggleFrame, function() return isActive end
-end
-
--- ========================================
--- 📱 MOBILE SHORTCUT
--- ========================================
-
-local function createMobileShortcut()
     local shortcutGui = Instance.new("ScreenGui")
     shortcutGui.Name = "GrowGardenShortcut"
     shortcutGui.Parent = CoreGui
     shortcutGui.ResetOnSpawn = false
     
-    local shortcut = Instance.new("TextButton")
-    shortcut.Parent = shortcutGui
-    shortcut.Size = UDim2.new(0, 60, 0, 60)
-    shortcut.Position = UDim2.new(0, 20, 0.3, 0)
-    shortcut.BackgroundColor3 = Theme.Accent
-    shortcut.BorderSizePixel = 0
-    shortcut.Text = "🌱"
-    shortcut.TextColor3 = Theme.Text
-    shortcut.TextSize = 24
-    shortcut.Font = Enum.Font.GothamBold
-    shortcut.Active = true
-    shortcut.Draggable = true
+    local shortcutButton = Instance.new("TextButton")
+    shortcutButton.Name = "ShortcutButton"
+    shortcutButton.Parent = shortcutGui
+    shortcutButton.Size = UDim2.new(0, 70, 0, 70)
+    shortcutButton.Position = UDim2.new(0, 20, 0.3, 0)
+    shortcutButton.BackgroundColor3 = Colors.Accent
+    shortcutButton.BorderSizePixel = 0
+    shortcutButton.Text = "🌱"
+    shortcutButton.TextColor3 = Colors.Text
+    shortcutButton.TextSize = 28
+    shortcutButton.Font = Enum.Font.GothamBold
+    shortcutButton.Active = true
+    shortcutButton.Draggable = true
     
-    addCorners(shortcut, 30)
-    addStroke(shortcut, Theme.Border, 2)
+    addRoundCorners(shortcutButton, 35)
+    addBorder(shortcutButton, Colors.Border, 2)
     
     -- Glow effect
     local glow = Instance.new("ImageLabel")
-    glow.Parent = shortcut
+    glow.Name = "Glow"
+    glow.Parent = shortcutButton
     glow.Size = UDim2.new(1, 20, 1, 20)
     glow.Position = UDim2.new(0, -10, 0, -10)
     glow.BackgroundTransparency = 1
     glow.Image = "rbxassetid://5028857084"
-    glow.ImageColor3 = Theme.Accent
+    glow.ImageColor3 = Colors.Accent
     glow.ImageTransparency = 0.5
     glow.ZIndex = -1
     
     -- Pulse animation
     spawn(function()
-        while shortcut.Parent do
-            TweenService:Create(shortcut, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-                Size = UDim2.new(0, 65, 0, 65)
-            }):Play()
+        while shortcutButton.Parent do
+            local tween = TweenService:Create(shortcutButton, 
+                TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), 
+                {Size = UDim2.new(0, 75, 0, 75)}
+            )
+            tween:Play()
             wait(1)
         end
     end)
     
-    return shortcut
+    return shortcutButton
 end
 
 -- ========================================
@@ -343,10 +232,11 @@ local function createMainGUI()
     screenGui.Name = "UltimateGrowGarden"
     screenGui.Parent = playerGui
     screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Calculate appropriate size
-    local guiSize = isMobile and UDim2.new(0.95, 0, 0.8, 0) or UDim2.new(0, 900, 0, 600)
-    local guiPosition = isMobile and UDim2.new(0.025, 0, 0.1, 0) or UDim2.new(0.5, -450, 0.5, -300)
+    -- Calculate size based on device
+    local guiSize = isMobile and UDim2.new(0.95, 0, 0.85, 0) or UDim2.new(0, 1000, 0, 650)
+    local guiPosition = isMobile and UDim2.new(0.025, 0, 0.075, 0) or UDim2.new(0.5, -500, 0.5, -325)
     
     -- Main frame
     local mainFrame = Instance.new("Frame")
@@ -354,93 +244,151 @@ local function createMainGUI()
     mainFrame.Parent = screenGui
     mainFrame.Size = guiSize
     mainFrame.Position = guiPosition
-    mainFrame.BackgroundColor3 = Theme.Primary
+    mainFrame.BackgroundColor3 = Colors.Background
     mainFrame.BorderSizePixel = 0
     mainFrame.Active = true
     mainFrame.Draggable = not isMobile
     mainFrame.Visible = false
     
-    addCorners(mainFrame, 15)
-    addStroke(mainFrame, Theme.Border, 2)
+    addRoundCorners(mainFrame, 20)
+    addBorder(mainFrame, Colors.Border, 3)
     
-    -- Glow effect
+    -- Glow effect for main frame
     local mainGlow = Instance.new("ImageLabel")
+    mainGlow.Name = "MainGlow"
     mainGlow.Parent = mainFrame
-    mainGlow.Size = UDim2.new(1, 30, 1, 30)
-    mainGlow.Position = UDim2.new(0, -15, 0, -15)
+    mainGlow.Size = UDim2.new(1, 40, 1, 40)
+    mainGlow.Position = UDim2.new(0, -20, 0, -20)
     mainGlow.BackgroundTransparency = 1
     mainGlow.Image = "rbxassetid://5028857084"
-    mainGlow.ImageColor3 = Theme.Accent
-    mainGlow.ImageTransparency = 0.7
+    mainGlow.ImageColor3 = Colors.Accent
+    mainGlow.ImageTransparency = 0.8
     mainGlow.ZIndex = -1
     
     -- Title bar
     local titleBar = Instance.new("Frame")
+    titleBar.Name = "TitleBar"
     titleBar.Parent = mainFrame
-    titleBar.Size = UDim2.new(1, 0, 0, isMobile and 60 or 50)
+    titleBar.Size = UDim2.new(1, 0, 0, isMobile and 70 or 60)
     titleBar.Position = UDim2.new(0, 0, 0, 0)
-    titleBar.BackgroundColor3 = Theme.Secondary
+    titleBar.BackgroundColor3 = Colors.Secondary
     titleBar.BorderSizePixel = 0
     
-    addCorners(titleBar, 15)
-    addGradient(titleBar, {Theme.Accent, Theme.Success}, 45)
+    addRoundCorners(titleBar, 20)
+    addGradient(titleBar, Colors.Accent, Colors.Success, 45)
     
     -- Title icon
-    createIcon(titleBar, isMobile and 32 or 28, UDim2.new(0, 15, 0.5, isMobile and -16 or -14))
+    local titleIcon = Instance.new("TextLabel")
+    titleIcon.Name = "TitleIcon"
+    titleIcon.Parent = titleBar
+    titleIcon.Size = UDim2.new(0, isMobile and 50 or 40, 1, 0)
+    titleIcon.Position = UDim2.new(0, 15, 0, 0)
+    titleIcon.BackgroundTransparency = 1
+    titleIcon.Text = "🌱"
+    titleIcon.TextColor3 = Colors.Text
+    titleIcon.TextSize = isMobile and 32 or 28
+    titleIcon.Font = Enum.Font.GothamBold
     
     -- Title text
-    local titleLabel = createTextLabel(titleBar, "🌱 ULTIMATE GROW A GARDEN", 
-                                     UDim2.new(1, -150, 1, 0), UDim2.new(0, isMobile and 55 or 50, 0, 0),
-                                     isMobile and 18 or 16, Enum.Font.GothamBold)
+    local titleText = Instance.new("TextLabel")
+    titleText.Name = "TitleText"
+    titleText.Parent = titleBar
+    titleText.Size = UDim2.new(1, -200, 1, 0)
+    titleText.Position = UDim2.new(0, isMobile and 70 or 60, 0, 0)
+    titleText.BackgroundTransparency = 1
+    titleText.Text = "ULTIMATE GROW A GARDEN"
+    titleText.TextColor3 = Colors.Text
+    titleText.TextSize = isMobile and 20 or 18
+    titleText.Font = Enum.Font.GothamBold
+    titleText.TextXAlignment = Enum.TextXAlignment.Left
     
     -- Close button
-    local closeBtn = createButton(titleBar, "✕", UDim2.new(0, 35, 0, 35), 
-                                UDim2.new(1, -40, 0.5, -17), function()
-                                    screenGui:Destroy()
-                                end, "danger")
+    local closeButton = Instance.new("TextButton")
+    closeButton.Name = "CloseButton"
+    closeButton.Parent = titleBar
+    closeButton.Size = UDim2.new(0, 40, 0, 40)
+    closeButton.Position = UDim2.new(1, -50, 0.5, -20)
+    closeButton.BackgroundColor3 = Colors.Error
+    closeButton.BorderSizePixel = 0
+    closeButton.Text = "✕"
+    closeButton.TextColor3 = Colors.Text
+    closeButton.TextSize = 16
+    closeButton.Font = Enum.Font.GothamBold
+    
+    addRoundCorners(closeButton, 20)
+    
+    closeButton.MouseButton1Click:Connect(function()
+        screenGui:Destroy()
+    end)
     
     -- Minimize button
-    local minimizeBtn = createButton(titleBar, "−", UDim2.new(0, 35, 0, 35), 
-                                   UDim2.new(1, -80, 0.5, -17), function()
-                                       mainFrame.Visible = false
-                                   end, "primary")
+    local minimizeButton = Instance.new("TextButton")
+    minimizeButton.Name = "MinimizeButton"
+    minimizeButton.Parent = titleBar
+    minimizeButton.Size = UDim2.new(0, 40, 0, 40)
+    minimizeButton.Position = UDim2.new(1, -95, 0.5, -20)
+    minimizeButton.BackgroundColor3 = Colors.Warning
+    minimizeButton.BorderSizePixel = 0
+    minimizeButton.Text = "−"
+    minimizeButton.TextColor3 = Colors.Text
+    minimizeButton.TextSize = 16
+    minimizeButton.Font = Enum.Font.GothamBold
+    
+    addRoundCorners(minimizeButton, 20)
+    
+    minimizeButton.MouseButton1Click:Connect(function()
+        mainFrame.Visible = false
+        ScriptData.isVisible = false
+    end)
     
     -- Sidebar
-    local sidebarWidth = isMobile and 70 : 200
+    local sidebarWidth = isMobile and 80 or 220
     local sidebar = Instance.new("Frame")
+    sidebar.Name = "Sidebar"
     sidebar.Parent = mainFrame
-    sidebar.Size = UDim2.new(0, sidebarWidth, 1, -(isMobile and 70 : 60))
-    sidebar.Position = UDim2.new(0, 10, 0, isMobile and 65 : 55)
-    sidebar.BackgroundColor3 = Theme.Secondary
+    sidebar.Size = UDim2.new(0, sidebarWidth, 1, -(isMobile and 80 or 70))
+    sidebar.Position = UDim2.new(0, 10, 0, isMobile and 75 or 65)
+    sidebar.BackgroundColor3 = Colors.Secondary
     sidebar.BorderSizePixel = 0
     
-    addCorners(sidebar, 12)
-    addStroke(sidebar, Theme.Border)
+    addRoundCorners(sidebar, 15)
+    addBorder(sidebar, Colors.Border, 1)
     
     -- Content area
     local contentArea = Instance.new("Frame")
+    contentArea.Name = "ContentArea"
     contentArea.Parent = mainFrame
-    contentArea.Size = UDim2.new(1, -(sidebarWidth + 30), 1, -(isMobile and 80 : 70))
-    contentArea.Position = UDim2.new(0, sidebarWidth + 20, 0, isMobile and 65 : 55)
-    contentArea.BackgroundColor3 = Theme.Primary
+    contentArea.Size = UDim2.new(1, -(sidebarWidth + 30), 1, -(isMobile and 90 or 80))
+    contentArea.Position = UDim2.new(0, sidebarWidth + 20, 0, isMobile and 75 or 65)
+    contentArea.BackgroundColor3 = Colors.Background
     contentArea.BorderSizePixel = 0
     
-    addCorners(contentArea, 12)
-    addStroke(contentArea, Theme.Border)
+    addRoundCorners(contentArea, 15)
+    addBorder(contentArea, Colors.Border, 1)
     
     -- Status bar
     local statusBar = Instance.new("Frame")
+    statusBar.Name = "StatusBar"
     statusBar.Parent = mainFrame
-    statusBar.Size = UDim2.new(1, -20, 0, 20)
-    statusBar.Position = UDim2.new(0, 10, 1, -25)
-    statusBar.BackgroundColor3 = Theme.Secondary
+    statusBar.Size = UDim2.new(1, -20, 0, 25)
+    statusBar.Position = UDim2.new(0, 10, 1, -30)
+    statusBar.BackgroundColor3 = Colors.Secondary
     statusBar.BorderSizePixel = 0
     
-    addCorners(statusBar, 8)
+    addRoundCorners(statusBar, 10)
+    addGradient(statusBar, Colors.Success, Colors.Accent, 90)
     
-    local statusText = createTextLabel(statusBar, "🟢 Ready | Items: 0 | Runtime: 00:00:00", 
-                                     UDim2.new(1, -20, 1, 0), UDim2.new(0, 10, 0, 0),
-                                     isMobile and 12 : 10, Enum.Font.Gotham, Theme.TextDim)
+    local statusText = Instance.new("TextLabel")
+    statusText.Name = "StatusText"
+    statusText.Parent = statusBar
+    statusText.Size = UDim2.new(1, -20, 1, 0)
+    statusText.Position = UDim2.new(0, 10, 0, 0)
+    statusText.BackgroundTransparency = 1
+    statusText.Text = "🟢 Ready | Items: 0 | Runtime: 00:00:00"
+    statusText.TextColor3 = Colors.Text
+    statusText.TextSize = isMobile and 12 or 10
+    statusText.Font = Enum.Font.Gotham
+    statusText.TextXAlignment = Enum.TextXAlignment.Left
     
     return screenGui, mainFrame, sidebar, contentArea, statusText
 end
@@ -449,68 +397,116 @@ end
 -- 📋 MENU SYSTEM
 -- ========================================
 
-local function createMenuButton(parent, text, icon, index, onClick)
-    local buttonHeight = isMobile and 50 : 40
-    local yPos = (index - 1) * (buttonHeight + 5) + 10
+local function createMenuButton(parent, text, emoji, index, onClick)
+    local buttonHeight = isMobile and 60 or 50
+    local buttonY = (index - 1) * (buttonHeight + 5) + 10
     
     local button = Instance.new("TextButton")
+    button.Name = text .. "Button"
     button.Parent = parent
     button.Size = UDim2.new(1, -10, 0, buttonHeight)
-    button.Position = UDim2.new(0, 5, 0, yPos)
-    button.BackgroundColor3 = Theme.Secondary
+    button.Position = UDim2.new(0, 5, 0, buttonY)
+    button.BackgroundColor3 = Colors.Secondary
     button.BorderSizePixel = 0
     button.Text = ""
     button.AutoButtonColor = false
     
-    addCorners(button, 8)
-    addStroke(button, Theme.Border)
+    addRoundCorners(button, 12)
+    addBorder(button, Colors.Border, 1)
     
-    -- Icon
-    createIcon(button, isMobile and 24 : 20, UDim2.new(0, 10, 0.5, isMobile and -12 : -10))
+    -- Emoji icon
+    local icon = Instance.new("TextLabel")
+    icon.Name = "Icon"
+    icon.Parent = button
+    icon.Size = UDim2.new(0, isMobile and 40 or 35, 1, 0)
+    icon.Position = UDim2.new(0, 10, 0, 0)
+    icon.BackgroundTransparency = 1
+    icon.Text = emoji
+    icon.TextColor3 = Colors.TextDim
+    icon.TextSize = isMobile and 28 or 24
+    icon.Font = Enum.Font.GothamBold
     
-    -- Text (only for desktop)
+    -- Text label (only for desktop)
+    local label
     if not isMobile then
-        createTextLabel(button, text, UDim2.new(1, -40, 1, 0), UDim2.new(0, 35, 0, 0), 12)
+        label = Instance.new("TextLabel")
+        label.Name = "Label"
+        label.Parent = button
+        label.Size = UDim2.new(1, -55, 1, 0)
+        label.Position = UDim2.new(0, 50, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = text
+        label.TextColor3 = Colors.TextDim
+        label.TextSize = 14
+        label.Font = Enum.Font.GothamSemibold
+        label.TextXAlignment = Enum.TextXAlignment.Left
     end
     
     -- Active indicator
     local indicator = Instance.new("Frame")
+    indicator.Name = "ActiveIndicator"
     indicator.Parent = button
-    indicator.Size = UDim2.new(0, 3, 0.7, 0)
-    indicator.Position = UDim2.new(0, 0, 0.15, 0)
-    indicator.BackgroundColor3 = Theme.Accent
+    indicator.Size = UDim2.new(0, 4, 0.8, 0)
+    indicator.Position = UDim2.new(0, 0, 0.1, 0)
+    indicator.BackgroundColor3 = Colors.Accent
     indicator.BorderSizePixel = 0
     indicator.Visible = false
     
-    addCorners(indicator, 2)
+    addRoundCorners(indicator, 2)
     
-    -- Hover effect
+    -- Hover effects
     button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = Theme.Hover
+        TweenService:Create(button, TweenInfo.new(0.3), {
+            BackgroundColor3 = Color3.fromRGB(50, 50, 65)
         }):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        if not indicator.Visible then
-            TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundColor3 = Theme.Secondary
+        TweenService:Create(icon, TweenInfo.new(0.3), {
+            TextColor3 = Colors.Accent
+        }):Play()
+        if label then
+            TweenService:Create(label, TweenInfo.new(0.3), {
+                TextColor3 = Colors.Text
             }):Play()
         end
     end)
     
+    button.MouseLeave:Connect(function()
+        if not indicator.Visible then
+            TweenService:Create(button, TweenInfo.new(0.3), {
+                BackgroundColor3 = Colors.Secondary
+            }):Play()
+            TweenService:Create(icon, TweenInfo.new(0.3), {
+                TextColor3 = Colors.TextDim
+            }):Play()
+            if label then
+                TweenService:Create(label, TweenInfo.new(0.3), {
+                    TextColor3 = Colors.TextDim
+                }):Play()
+            end
+        end
+    end)
+    
     button.MouseButton1Click:Connect(function()
-        -- Deselect all buttons
+        -- Deselect all menu buttons
         for _, child in pairs(parent:GetChildren()) do
-            if child:IsA("TextButton") and child:FindFirstChild("Frame") then
-                child.Frame.Visible = false
-                child.BackgroundColor3 = Theme.Secondary
+            if child:IsA("TextButton") and child:FindFirstChild("ActiveIndicator") then
+                child.ActiveIndicator.Visible = false
+                child.BackgroundColor3 = Colors.Secondary
+                if child:FindFirstChild("Icon") then
+                    child.Icon.TextColor3 = Colors.TextDim
+                end
+                if child:FindFirstChild("Label") then
+                    child.Label.TextColor3 = Colors.TextDim
+                end
             end
         end
         
         -- Select this button
         indicator.Visible = true
-        button.BackgroundColor3 = Theme.Hover
+        button.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        icon.TextColor3 = Colors.Accent
+        if label then
+            label.TextColor3 = Colors.Text
+        end
         
         if onClick then
             onClick()
@@ -530,274 +526,391 @@ local function clearContent(parent)
     end
 end
 
-local function createStatsCard(parent, title, value, icon, color, position)
-    local card = Instance.new("Frame")
-    card.Parent = parent
-    card.Size = UDim2.new(0.48, 0, 0, isMobile and 80 : 70)
-    card.Position = position
-    card.BackgroundColor3 = Theme.Secondary
-    card.BorderSizePixel = 0
+local function createToggleSwitch(parent, position, size, onToggle, defaultState)
+    defaultState = defaultState or false
     
-    addCorners(card, 10)
-    addStroke(card, color or Theme.Border)
+    local switchFrame = Instance.new("Frame")
+    switchFrame.Parent = parent
+    switchFrame.Size = size or UDim2.new(0, 60, 0, 30)
+    switchFrame.Position = position
+    switchFrame.BackgroundColor3 = defaultState and Colors.Success or Colors.TextDim
+    switchFrame.BorderSizePixel = 0
     
-    -- Icon
-    createIcon(card, isMobile and 24 : 20, UDim2.new(0, 10, 0, 10))
+    addRoundCorners(switchFrame, 15)
     
-    -- Value
-    local valueLabel = createTextLabel(card, value, UDim2.new(1, -45, 0, isMobile and 25 : 20), 
-                                     UDim2.new(0, 40, 0, 5), isMobile and 16 : 14, Enum.Font.GothamBold)
+    local switchKnob = Instance.new("Frame")
+    switchKnob.Parent = switchFrame
+    switchKnob.Size = UDim2.new(0, 26, 0, 26)
+    switchKnob.Position = defaultState and UDim2.new(0, 32, 0, 2) or UDim2.new(0, 2, 0, 2)
+    switchKnob.BackgroundColor3 = Colors.Text
+    switchKnob.BorderSizePixel = 0
     
-    -- Title
-    createTextLabel(card, title, UDim2.new(1, -45, 0, isMobile and 20 : 15), 
-                  UDim2.new(0, 40, 0, isMobile and 30 : 25), isMobile and 10 : 9, Enum.Font.Gotham, Theme.TextDim)
+    addRoundCorners(switchKnob, 13)
     
-    return card, valueLabel
+    local clickButton = Instance.new("TextButton")
+    clickButton.Parent = switchFrame
+    clickButton.Size = UDim2.new(1, 0, 1, 0)
+    clickButton.BackgroundTransparency = 1
+    clickButton.Text = ""
+    
+    local isActive = defaultState
+    
+    clickButton.MouseButton1Click:Connect(function()
+        isActive = not isActive
+        
+        TweenService:Create(switchKnob, TweenInfo.new(0.3, Enum.EasingStyle.Back), {
+            Position = isActive and UDim2.new(0, 32, 0, 2) or UDim2.new(0, 2, 0, 2)
+        }):Play()
+        
+        TweenService:Create(switchFrame, TweenInfo.new(0.3), {
+            BackgroundColor3 = isActive and Colors.Success or Colors.TextDim
+        }):Play()
+        
+        if onToggle then
+            onToggle(isActive)
+        end
+    end)
+    
+    return switchFrame, function() return isActive end
 end
 
 local function createCharacterPanel(parent)
     clearContent(parent)
     
-    -- Stats section
-    local statsFrame = Instance.new("Frame")
-    statsFrame.Parent = parent
-    statsFrame.Size = UDim2.new(1, -20, 0, isMobile and 180 : 150)
-    statsFrame.Position = UDim2.new(0, 10, 0, 10)
-    statsFrame.BackgroundTransparency = 1
+    -- Header
+    local header = Instance.new("Frame")
+    header.Parent = parent
+    header.Size = UDim2.new(1, -20, 0, isMobile and 60 or 50)
+    header.Position = UDim2.new(0, 10, 0, 10)
+    header.BackgroundColor3 = Colors.Secondary
+    header.BorderSizePixel = 0
     
-    local statsTitle = createTextLabel(statsFrame, "📊 LIVE STATISTICS", 
-                                     UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0),
-                                     isMobile and 16 : 14, Enum.Font.GothamBold)
+    addRoundCorners(header, 12)
+    addGradient(header, Colors.Accent, Colors.Success, 45)
     
-    -- Stats cards
-    local card1, valueLabel1 = createStatsCard(statsFrame, "ITEMS BOUGHT", "0", nil, Theme.Accent, UDim2.new(0, 0, 0, 40))
-    local card2, valueLabel2 = createStatsCard(statsFrame, "RUNTIME", "00:00:00", nil, Theme.Success, UDim2.new(0.52, 0, 0, 40))
-    local card3, valueLabel3 = createStatsCard(statsFrame, "ACTIVE SEEDS", "0", nil, Theme.Warning, UDim2.new(0, 0, 0, isMobile and 130 : 120))
-    local card4, valueLabel4 = createStatsCard(statsFrame, "ACTIVE GEAR", "0", nil, Theme.Error, UDim2.new(0.52, 0, 0, isMobile and 130 : 120))
+    local headerText = Instance.new("TextLabel")
+    headerText.Parent = header
+    headerText.Size = UDim2.new(1, -20, 1, 0)
+    headerText.Position = UDim2.new(0, 10, 0, 0)
+    headerText.BackgroundTransparency = 1
+    headerText.Text = "🏃 CHARACTER CONTROL"
+    headerText.TextColor3 = Colors.Text
+    headerText.TextSize = isMobile and 18 or 16
+    headerText.Font = Enum.Font.GothamBold
+    headerText.TextXAlignment = Enum.TextXAlignment.Left
     
-    -- Speed control
-    local speedFrame = Instance.new("Frame")
-    speedFrame.Parent = parent
-    speedFrame.Size = UDim2.new(1, -20, 0, isMobile and 100 : 80)
-    speedFrame.Position = UDim2.new(0, 10, 0, isMobile and 200 : 170)
-    speedFrame.BackgroundColor3 = Theme.Secondary
-    speedFrame.BorderSizePixel = 0
+    -- Speed control section
+    local speedSection = Instance.new("Frame")
+    speedSection.Parent = parent
+    speedSection.Size = UDim2.new(1, -20, 0, isMobile and 100 or 80)
+    speedSection.Position = UDim2.new(0, 10, 0, isMobile and 80 or 70)
+    speedSection.BackgroundColor3 = Colors.Secondary
+    speedSection.BorderSizePixel = 0
     
-    addCorners(speedFrame, 10)
-    addStroke(speedFrame, Theme.Border)
+    addRoundCorners(speedSection, 12)
+    addBorder(speedSection, Colors.Border, 1)
     
-    createTextLabel(speedFrame, "🏃 SPEED CONTROL", UDim2.new(1, 0, 0, 25), UDim2.new(0, 0, 0, 5),
-                  isMobile and 14 : 12, Enum.Font.GothamBold)
+    local speedLabel = Instance.new("TextLabel")
+    speedLabel.Parent = speedSection
+    speedLabel.Size = UDim2.new(1, 0, 0, 25)
+    speedLabel.Position = UDim2.new(0, 0, 0, 5)
+    speedLabel.BackgroundTransparency = 1
+    speedLabel.Text = "Player Speed"
+    speedLabel.TextColor3 = Colors.Text
+    speedLabel.TextSize = isMobile and 16 or 14
+    speedLabel.Font = Enum.Font.GothamBold
     
     -- Speed input
     local speedInput = Instance.new("TextBox")
-    speedInput.Parent = speedFrame
-    speedInput.Size = UDim2.new(0, isMobile and 120 : 100, 0, isMobile and 30 : 25)
-    speedInput.Position = UDim2.new(0, 10, 0, isMobile and 35 : 30)
-    speedInput.BackgroundColor3 = Theme.Primary
+    speedInput.Parent = speedSection
+    speedInput.Size = UDim2.new(0, isMobile and 140 or 120, 0, isMobile and 35 or 30)
+    speedInput.Position = UDim2.new(0, 15, 0, isMobile and 35 or 30)
+    speedInput.BackgroundColor3 = Colors.Background
     speedInput.BorderSizePixel = 0
-    speedInput.Text = tostring(ScriptConfig.playerSpeed)
-    speedInput.TextColor3 = Theme.Text
-    speedInput.TextSize = isMobile and 14 : 12
+    speedInput.Text = tostring(ScriptData.playerSpeed)
+    speedInput.TextColor3 = Colors.Text
+    speedInput.TextSize = isMobile and 16 or 14
     speedInput.Font = Enum.Font.Gotham
-    speedInput.PlaceholderText = "Speed..."
+    speedInput.PlaceholderText = "Enter speed..."
     
-    addCorners(speedInput, 6)
-    addStroke(speedInput, Theme.Border)
+    addRoundCorners(speedInput, 8)
+    addBorder(speedInput, Colors.Border, 1)
     
     -- Speed toggle
-    local speedToggle, getSpeedState = createToggle(speedFrame, 
-        UDim2.new(0, isMobile and 140 : 120, 0, isMobile and 35 : 30), 
-        UDim2.new(0, isMobile and 60 : 50, 0, isMobile and 30 : 25), 
+    local speedToggle, getSpeedState = createToggleSwitch(speedSection, 
+        UDim2.new(0, isMobile and 170 or 150, 0, isMobile and 35 or 30), 
+        UDim2.new(0, isMobile and 70 or 60, 0, isMobile and 35 or 30), 
         function(state)
-            ActiveStates.speed = state
+            IsActive.speed = state
             if player.Character and player.Character:FindFirstChild("Humanoid") then
-                player.Character.Humanoid.WalkSpeed = state and ScriptConfig.playerSpeed or 16
+                player.Character.Humanoid.WalkSpeed = state and ScriptData.playerSpeed or 16
             end
         end)
     
     speedInput.FocusLost:Connect(function()
         local newSpeed = tonumber(speedInput.Text)
         if newSpeed and newSpeed > 0 and newSpeed <= 500 then
-            ScriptConfig.playerSpeed = newSpeed
-            if ActiveStates.speed and player.Character and player.Character:FindFirstChild("Humanoid") then
-                player.Character.Humanoid.WalkSpeed = ScriptConfig.playerSpeed
+            ScriptData.playerSpeed = newSpeed
+            if IsActive.speed and player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid.WalkSpeed = ScriptData.playerSpeed
             end
         else
-            speedInput.Text = tostring(ScriptConfig.playerSpeed)
+            speedInput.Text = tostring(ScriptData.playerSpeed)
         end
     end)
     
-    -- Auto controls
-    local autoFrame = Instance.new("Frame")
-    autoFrame.Parent = parent
-    autoFrame.Size = UDim2.new(1, -20, 0, isMobile and 80 : 60)
-    autoFrame.Position = UDim2.new(0, 10, 0, isMobile and 310 : 260)
-    autoFrame.BackgroundColor3 = Theme.Secondary
-    autoFrame.BorderSizePixel = 0
+    -- Auto farm controls
+    local autoSection = Instance.new("Frame")
+    autoSection.Parent = parent
+    autoSection.Size = UDim2.new(1, -20, 0, isMobile and 80 or 60)
+    autoSection.Position = UDim2.new(0, 10, 0, isMobile and 190 or 160)
+    autoSection.BackgroundColor3 = Colors.Secondary
+    autoSection.BorderSizePixel = 0
     
-    addCorners(autoFrame, 10)
-    addStroke(autoFrame, Theme.Border)
+    addRoundCorners(autoSection, 12)
+    addBorder(autoSection, Colors.Border, 1)
     
-    createTextLabel(autoFrame, "🤖 AUTO CONTROLS", UDim2.new(1, 0, 0, 25), UDim2.new(0, 0, 0, 5),
-                  isMobile and 14 : 12, Enum.Font.GothamBold)
+    local autoLabel = Instance.new("TextLabel")
+    autoLabel.Parent = autoSection
+    autoLabel.Size = UDim2.new(1, 0, 0, 25)
+    autoLabel.Position = UDim2.new(0, 0, 0, 5)
+    autoLabel.BackgroundTransparency = 1
+    autoLabel.Text = "🤖 Auto Farm Controls"
+    autoLabel.TextColor3 = Colors.Text
+    autoLabel.TextSize = isMobile and 16 or 14
+    autoLabel.Font = Enum.Font.GothamBold
     
     -- Start all button
-    createButton(autoFrame, "🚀 START ALL", UDim2.new(0, isMobile and 120 : 100, 0, isMobile and 25 : 20), 
-               UDim2.new(0, 10, 0, isMobile and 35 : 30), function()
-                   for category, items in pairs(ActiveStates) do
-                       if type(items) == "table" then
-                           for itemName, _ in pairs(items) do
-                               if not items[itemName] then
-                                   items[itemName] = true
-                                   RunningLoops[category][itemName] = true
-                                   
-                                   spawn(function()
-                                       local buyFunc = category == "seeds" and buySeed or
-                                                      category == "gear" and buyGear or
-                                                      category == "pets" and buyPetEgg
-                                       
-                                       while RunningLoops[category][itemName] and items[itemName] do
-                                           buyFunc(itemName)
-                                           wait(0.1)
-                                       end
-                                   end)
-                               end
-                           end
-                       end
-                   end
-               end, "success")
+    local startAllButton = Instance.new("TextButton")
+    startAllButton.Parent = autoSection
+    startAllButton.Size = UDim2.new(0, isMobile and 140 or 120, 0, isMobile and 30 or 25)
+    startAllButton.Position = UDim2.new(0, 15, 0, isMobile and 35 or 30)
+    startAllButton.BackgroundColor3 = Colors.Success
+    startAllButton.BorderSizePixel = 0
+    startAllButton.Text = "🚀 START ALL"
+    startAllButton.TextColor3 = Colors.Text
+    startAllButton.TextSize = isMobile and 14 or 12
+    startAllButton.Font = Enum.Font.GothamBold
+    
+    addRoundCorners(startAllButton, 8)
+    
+    startAllButton.MouseButton1Click:Connect(function()
+        for category, items in pairs(IsActive) do
+            if type(items) == "table" then
+                for itemName, _ in pairs(items) do
+                    if not items[itemName] then
+                        items[itemName] = true
+                        Loops[category][itemName] = true
+                        
+                        spawn(function()
+                            local buyFunc = category == "seeds" and buySeed or
+                                           category == "gear" and buyGear or
+                                           category == "pets" and buyPetEgg
+                            
+                            while Loops[category][itemName] and items[itemName] do
+                                buyFunc(itemName)
+                                wait(0.1)
+                            end
+                        end)
+                    end
+                end
+            end
+        end
+    end)
     
     -- Stop all button
-    createButton(autoFrame, "🛑 STOP ALL", UDim2.new(0, isMobile and 120 : 100, 0, isMobile and 25 : 20), 
-               UDim2.new(0, isMobile and 140 : 120, 0, isMobile and 35 : 30), function()
-                   for category, items in pairs(ActiveStates) do
-                       if type(items) == "table" then
-                           for itemName, _ in pairs(items) do
-                               items[itemName] = false
-                               RunningLoops[category][itemName] = false
-                           end
-                       end
-                   end
-               end, "danger")
+    local stopAllButton = Instance.new("TextButton")
+    stopAllButton.Parent = autoSection
+    stopAllButton.Size = UDim2.new(0, isMobile and 140 or 120, 0, isMobile and 30 or 25)
+    stopAllButton.Position = UDim2.new(0, isMobile and 170 or 150, 0, isMobile and 35 or 30)
+    stopAllButton.BackgroundColor3 = Colors.Error
+    stopAllButton.BorderSizePixel = 0
+    stopAllButton.Text = "🛑 STOP ALL"
+    stopAllButton.TextColor3 = Colors.Text
+    stopAllButton.TextSize = isMobile and 14 or 12
+    stopAllButton.Font = Enum.Font.GothamBold
+    
+    addRoundCorners(stopAllButton, 8)
+    
+    stopAllButton.MouseButton1Click:Connect(function()
+        for category, items in pairs(IsActive) do
+            if type(items) == "table" then
+                for itemName, _ in pairs(items) do
+                    items[itemName] = false
+                    Loops[category][itemName] = false
+                end
+            end
+        end
+    end)
+    
+    -- Stats section
+    local statsSection = Instance.new("Frame")
+    statsSection.Parent = parent
+    statsSection.Size = UDim2.new(1, -20, 0, isMobile and 120 or 100)
+    statsSection.Position = UDim2.new(0, 10, 0, isMobile and 280 or 230)
+    statsSection.BackgroundColor3 = Colors.Secondary
+    statsSection.BorderSizePixel = 0
+    
+    addRoundCorners(statsSection, 12)
+    addBorder(statsSection, Colors.Border, 1)
+    
+    local statsLabel = Instance.new("TextLabel")
+    statsLabel.Parent = statsSection
+    statsLabel.Size = UDim2.new(1, 0, 0, 25)
+    statsLabel.Position = UDim2.new(0, 0, 0, 5)
+    statsLabel.BackgroundTransparency = 1
+    statsLabel.Text = "📊 Live Statistics"
+    statsLabel.TextColor3 = Colors.Text
+    statsLabel.TextSize = isMobile and 16 or 14
+    statsLabel.Font = Enum.Font.GothamBold
+    
+    local statsText = Instance.new("TextLabel")
+    statsText.Parent = statsSection
+    statsText.Size = UDim2.new(1, -20, 1, -35)
+    statsText.Position = UDim2.new(0, 10, 0, 30)
+    statsText.BackgroundTransparency = 1
+    statsText.Text = "Items Bought: 0\nActive Seeds: 0\nActive Gear: 0\nActive Pets: 0"
+    statsText.TextColor3 = Colors.TextDim
+    statsText.TextSize = isMobile and 14 or 12
+    statsText.Font = Enum.Font.Gotham
+    statsText.TextXAlignment = Enum.TextXAlignment.Left
+    statsText.TextYAlignment = Enum.TextYAlignment.Top
     
     -- Update stats
     spawn(function()
-        while parent.Parent do
-            local runtime = tick() - ScriptConfig.stats.startTime
-            local hours = math.floor(runtime / 3600)
-            local minutes = math.floor((runtime % 3600) / 60)
-            local seconds = math.floor(runtime % 60)
-            
+        while statsText.Parent do
             local activeSeeds = 0
             local activeGear = 0
+            local activePets = 0
             
-            for _, active in pairs(ActiveStates.seeds) do
+            for _, active in pairs(IsActive.seeds) do
                 if active then activeSeeds = activeSeeds + 1 end
             end
-            for _, active in pairs(ActiveStates.gear) do
+            for _, active in pairs(IsActive.gear) do
                 if active then activeGear = activeGear + 1 end
             end
+            for _, active in pairs(IsActive.pets) do
+                if active then activePets = activePets + 1 end
+            end
             
-            valueLabel1.Text = tostring(ScriptConfig.stats.itemsBought)
-            valueLabel2.Text = string.format("%02d:%02d:%02d", hours, minutes, seconds)
-            valueLabel3.Text = tostring(activeSeeds)
-            valueLabel4.Text = tostring(activeGear)
+            statsText.Text = string.format(
+                "Items Bought: %d\nActive Seeds: %d\nActive Gear: %d\nActive Pets: %d",
+                ScriptData.stats.itemsBought, activeSeeds, activeGear, activePets
+            )
             
             wait(1)
         end
     end)
 end
 
-local function createItemPanel(parent, items, itemType, buyFunction, title)
+local function createItemPanel(parent, items, itemType, buyFunction, title, emoji)
     clearContent(parent)
+    
+    -- Initialize item states
+    for _, itemName in pairs(items) do
+        IsActive[itemType][itemName] = false
+        Loops[itemType][itemName] = false
+    end
     
     -- Header
     local header = Instance.new("Frame")
     header.Parent = parent
-    header.Size = UDim2.new(1, -20, 0, isMobile and 50 : 40)
+    header.Size = UDim2.new(1, -20, 0, isMobile and 60 or 50)
     header.Position = UDim2.new(0, 10, 0, 10)
-    header.BackgroundColor3 = Theme.Secondary
+    header.BackgroundColor3 = Colors.Secondary
     header.BorderSizePixel = 0
     
-    addCorners(header, 10)
-    addGradient(header, {Theme.Accent, Theme.Success}, 45)
+    addRoundCorners(header, 12)
+    addGradient(header, Colors.Accent, Colors.Success, 45)
     
-    createIcon(header, isMobile and 24 : 20, UDim2.new(0, 10, 0.5, isMobile and -12 : -10))
-    createTextLabel(header, title, UDim2.new(1, -50, 1, 0), UDim2.new(0, 40, 0, 0),
-                  isMobile and 16 : 14, Enum.Font.GothamBold)
+    local headerText = Instance.new("TextLabel")
+    headerText.Parent = header
+    headerText.Size = UDim2.new(1, -20, 1, 0)
+    headerText.Position = UDim2.new(0, 10, 0, 0)
+    headerText.BackgroundTransparency = 1
+    headerText.Text = emoji .. " " .. title
+    headerText.TextColor3 = Colors.Text
+    headerText.TextSize = isMobile and 18 or 16
+    headerText.Font = Enum.Font.GothamBold
+    headerText.TextXAlignment = Enum.TextXAlignment.Left
     
-    -- Search bar
-    local searchFrame = Instance.new("Frame")
-    searchFrame.Parent = parent
-    searchFrame.Size = UDim2.new(1, -20, 0, isMobile and 40 : 35)
-    searchFrame.Position = UDim2.new(0, 10, 0, isMobile and 60 : 55)
-    searchFrame.BackgroundColor3 = Theme.Secondary
-    searchFrame.BorderSizePixel = 0
+    -- Search and controls
+    local controlsFrame = Instance.new("Frame")
+    controlsFrame.Parent = parent
+    controlsFrame.Size = UDim2.new(1, -20, 0, isMobile and 50 or 40)
+    controlsFrame.Position = UDim2.new(0, 10, 0, isMobile and 75 or 65)
+    controlsFrame.BackgroundColor3 = Colors.Secondary
+    controlsFrame.BorderSizePixel = 0
     
-    addCorners(searchFrame, 8)
-    addStroke(searchFrame, Theme.Border)
+    addRoundCorners(controlsFrame, 10)
+    addBorder(controlsFrame, Colors.Border, 1)
     
+    -- Search input
     local searchInput = Instance.new("TextBox")
-    searchInput.Parent = searchFrame
-    searchInput.Size = UDim2.new(1, -80, 1, -6)
-    searchInput.Position = UDim2.new(0, 35, 0, 3)
+    searchInput.Parent = controlsFrame
+    searchInput.Size = UDim2.new(1, -80, 1, -10)
+    searchInput.Position = UDim2.new(0, 5, 0, 5)
     searchInput.BackgroundTransparency = 1
     searchInput.Text = ""
-    searchInput.TextColor3 = Theme.Text
-    searchInput.TextSize = isMobile and 14 : 12
+    searchInput.TextColor3 = Colors.Text
+    searchInput.TextSize = isMobile and 16 or 14
     searchInput.Font = Enum.Font.Gotham
     searchInput.PlaceholderText = "🔍 Search items..."
     
-    createIcon(searchFrame, isMobile and 20 : 16, UDim2.new(0, 8, 0.5, isMobile and -10 : -8))
-    
     -- Select all button
-    createButton(searchFrame, "ALL", UDim2.new(0, isMobile and 40 : 35, 1, -6), 
-               UDim2.new(1, isMobile and -42 : -37, 0, 3), function()
-                   for _, itemName in pairs(items) do
-                       if not ActiveStates[itemType][itemName] then
-                           ActiveStates[itemType][itemName] = true
-                           RunningLoops[itemType][itemName] = true
-                           
-                           spawn(function()
-                               while RunningLoops[itemType][itemName] and ActiveStates[itemType][itemName] do
-                                   buyFunction(itemName)
-                                   wait(0.1)
-                               end
-                           end)
-                       end
-                   end
-               end)
+    local selectAllButton = Instance.new("TextButton")
+    selectAllButton.Parent = controlsFrame
+    selectAllButton.Size = UDim2.new(0, 70, 1, -10)
+    selectAllButton.Position = UDim2.new(1, -75, 0, 5)
+    selectAllButton.BackgroundColor3 = Colors.Accent
+    selectAllButton.BorderSizePixel = 0
+    selectAllButton.Text = "ALL"
+    selectAllButton.TextColor3 = Colors.Text
+    selectAllButton.TextSize = isMobile and 14 or 12
+    selectAllButton.Font = Enum.Font.GothamBold
+    
+    addRoundCorners(selectAllButton, 8)
+    
+    selectAllButton.MouseButton1Click:Connect(function()
+        for _, itemName in pairs(items) do
+            if not IsActive[itemType][itemName] then
+                IsActive[itemType][itemName] = true
+                Loops[itemType][itemName] = true
+                
+                spawn(function()
+                    while Loops[itemType][itemName] and IsActive[itemType][itemName] do
+                        buyFunction(itemName)
+                        wait(0.1)
+                    end
+                end)
+            end
+        end
+    end)
     
     -- Items scroll frame
     local scrollFrame = Instance.new("ScrollingFrame")
     scrollFrame.Parent = parent
-    scrollFrame.Size = UDim2.new(1, -20, 1, -(isMobile and 110 : 100))
-    scrollFrame.Position = UDim2.new(0, 10, 0, isMobile and 105 : 95)
-    scrollFrame.BackgroundColor3 = Theme.Primary
+    scrollFrame.Size = UDim2.new(1, -20, 1, -(isMobile and 140 or 120))
+    scrollFrame.Position = UDim2.new(0, 10, 0, isMobile and 130 or 110)
+    scrollFrame.BackgroundColor3 = Colors.Background
     scrollFrame.BorderSizePixel = 0
-    scrollFrame.ScrollBarThickness = isMobile and 8 : 6
-    scrollFrame.ScrollBarImageColor3 = Theme.Accent
+    scrollFrame.ScrollBarThickness = isMobile and 8 or 6
+    scrollFrame.ScrollBarImageColor3 = Colors.Accent
     
-    addCorners(scrollFrame, 10)
-    addStroke(scrollFrame, Theme.Border)
+    addRoundCorners(scrollFrame, 12)
+    addBorder(scrollFrame, Colors.Border, 1)
     
     local listLayout = Instance.new("UIListLayout")
     listLayout.Parent = scrollFrame
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    listLayout.Padding = UDim.new(0, 3)
-    
-    -- Initialize item states
-    for _, itemName in pairs(items) do
-        ActiveStates[itemType][itemName] = false
-        RunningLoops[itemType][itemName] = false
-    end
+    listLayout.Padding = UDim.new(0, 5)
     
     local itemFrames = {}
     
     local function updateItemDisplay(searchTerm)
         searchTerm = searchTerm:lower()
         
+        -- Hide all items first
         for _, frame in pairs(itemFrames) do
             frame.Visible = false
         end
@@ -809,51 +922,66 @@ local function createItemPanel(parent, items, itemType, buyFunction, title)
                     -- Create item frame
                     local itemFrame = Instance.new("Frame")
                     itemFrame.Parent = scrollFrame
-                    itemFrame.Size = UDim2.new(1, -10, 0, isMobile and 50 : 40)
-                    itemFrame.BackgroundColor3 = Theme.Secondary
+                    itemFrame.Size = UDim2.new(1, -10, 0, isMobile and 55 or 45)
+                    itemFrame.BackgroundColor3 = Colors.Secondary
                     itemFrame.BorderSizePixel = 0
                     
-                    addCorners(itemFrame, 8)
-                    addStroke(itemFrame, Theme.Border)
+                    addRoundCorners(itemFrame, 10)
+                    addBorder(itemFrame, Colors.Border, 1)
                     
-                    -- Item icon
-                    createIcon(itemFrame, isMobile and 20 : 16, UDim2.new(0, 8, 0.5, isMobile and -10 : -8))
+                    -- Item emoji
+                    local itemEmoji = Instance.new("TextLabel")
+                    itemEmoji.Parent = itemFrame
+                    itemEmoji.Size = UDim2.new(0, isMobile and 35 or 30, 1, 0)
+                    itemEmoji.Position = UDim2.new(0, 10, 0, 0)
+                    itemEmoji.BackgroundTransparency = 1
+                    itemEmoji.Text = emoji
+                    itemEmoji.TextColor3 = Colors.Accent
+                    itemEmoji.TextSize = isMobile and 20 or 16
+                    itemEmoji.Font = Enum.Font.GothamBold
                     
                     -- Item name
-                    createTextLabel(itemFrame, itemName, UDim2.new(1, -(isMobile and 80 : 70), 1, 0), 
-                                  UDim2.new(0, isMobile and 35 : 30, 0, 0), isMobile and 12 : 11, 
-                                  Enum.Font.GothamSemibold, Theme.Text)
+                    local itemLabel = Instance.new("TextLabel")
+                    itemLabel.Parent = itemFrame
+                    itemLabel.Size = UDim2.new(1, -(isMobile and 110 or 100), 1, 0)
+                    itemLabel.Position = UDim2.new(0, isMobile and 50 or 45, 0, 0)
+                    itemLabel.BackgroundTransparency = 1
+                    itemLabel.Text = itemName
+                    itemLabel.TextColor3 = Colors.Text
+                    itemLabel.TextSize = isMobile and 14 or 12
+                    itemLabel.Font = Enum.Font.GothamSemibold
+                    itemLabel.TextXAlignment = Enum.TextXAlignment.Left
                     
                     -- Toggle switch
-                    local toggle, getToggleState = createToggle(itemFrame, 
-                        UDim2.new(1, -(isMobile and 60 : 50), 0.5, -(isMobile and 12 : 10)), 
-                        UDim2.new(0, isMobile and 55 : 45, 0, isMobile and 24 : 20), 
+                    local toggle, getToggleState = createToggleSwitch(itemFrame, 
+                        UDim2.new(1, -(isMobile and 65 or 55), 0.5, -(isMobile and 15 or 12)), 
+                        UDim2.new(0, isMobile and 60 or 50, 0, isMobile and 30 or 24), 
                         function(state)
-                            ActiveStates[itemType][itemName] = state
+                            IsActive[itemType][itemName] = state
                             
                             if state then
-                                RunningLoops[itemType][itemName] = true
+                                Loops[itemType][itemName] = true
                                 spawn(function()
-                                    while RunningLoops[itemType][itemName] and ActiveStates[itemType][itemName] do
+                                    while Loops[itemType][itemName] and IsActive[itemType][itemName] do
                                         buyFunction(itemName)
                                         wait(0.1)
                                     end
                                 end)
                             else
-                                RunningLoops[itemType][itemName] = false
+                                Loops[itemType][itemName] = false
                             end
                         end)
                     
                     -- Hover effect
                     itemFrame.MouseEnter:Connect(function()
                         TweenService:Create(itemFrame, TweenInfo.new(0.2), {
-                            BackgroundColor3 = Theme.Hover
+                            BackgroundColor3 = Color3.fromRGB(50, 50, 65)
                         }):Play()
                     end)
                     
                     itemFrame.MouseLeave:Connect(function()
                         TweenService:Create(itemFrame, TweenInfo.new(0.2), {
-                            BackgroundColor3 = Theme.Secondary
+                            BackgroundColor3 = Colors.Secondary
                         }):Play()
                     end)
                     
@@ -877,7 +1005,7 @@ local function createItemPanel(parent, items, itemType, buyFunction, title)
     -- Initial display
     updateItemDisplay("")
     
-    -- Update canvas size
+    -- Update canvas size when content changes
     listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
     end)
@@ -888,52 +1016,62 @@ end
 -- ========================================
 
 local function initializeScript()
-    -- Create mobile shortcut
-    local shortcut = createMobileShortcut()
+    print("🌱 Initializing Ultimate Grow Garden Script...")
+    
+    -- Create shortcut button
+    local shortcutButton = createShortcutButton()
+    print("✅ Shortcut button created")
     
     -- Create main GUI
     local screenGui, mainFrame, sidebar, contentArea, statusText = createMainGUI()
+    print("✅ Main GUI created")
     
-    -- Mobile shortcut click handler
-    shortcut.MouseButton1Click:Connect(function()
-        ScriptConfig.isVisible = not ScriptConfig.isVisible
-        mainFrame.Visible = ScriptConfig.isVisible
+    -- Shortcut button click handler
+    shortcutButton.MouseButton1Click:Connect(function()
+        ScriptData.isVisible = not ScriptData.isVisible
+        mainFrame.Visible = ScriptData.isVisible
         
-        if ScriptConfig.isVisible then
+        if ScriptData.isVisible then
+            -- Animate GUI appearance
+            mainFrame.Size = UDim2.new(0, 0, 0, 0)
+            mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+            
             TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
-                Size = isMobile and UDim2.new(0.95, 0, 0.8, 0) or UDim2.new(0, 900, 0, 600)
+                Size = isMobile and UDim2.new(0.95, 0, 0.85, 0) or UDim2.new(0, 1000, 0, 650),
+                Position = isMobile and UDim2.new(0.025, 0, 0.075, 0) or UDim2.new(0.5, -500, 0.5, -325)
             }):Play()
         end
     end)
     
-    -- Menu buttons
-    local menuButtons = {
-        {text = "CHARACTER", icon = "👤", onClick = function()
+    -- Create menu buttons
+    local menuItems = {
+        {text = "CHARACTER", emoji = "🏃", onClick = function()
             createCharacterPanel(contentArea)
         end},
-        {text = "SEEDS", icon = "🌱", onClick = function()
-            createItemPanel(contentArea, GameItems.seeds, "seeds", buySeed, "🌱 AUTO SEED BUYER")
+        {text = "SEEDS", emoji = "🌱", onClick = function()
+            createItemPanel(contentArea, Items.seeds, "seeds", buySeed, "AUTO SEED BUYER", "🌱")
         end},
-        {text = "GEAR", icon = "⚙️", onClick = function()
-            createItemPanel(contentArea, GameItems.gear, "gear", buyGear, "⚙️ AUTO GEAR BUYER")
+        {text = "GEAR", emoji = "⚙️", onClick = function()
+            createItemPanel(contentArea, Items.gear, "gear", buyGear, "AUTO GEAR BUYER", "⚙️")
         end},
-        {text = "PETS", icon = "🥚", onClick = function()
-            createItemPanel(contentArea, GameItems.pets, "pets", buyPetEgg, "🥚 AUTO PET BUYER")
+        {text = "PETS", emoji = "🥚", onClick = function()
+            createItemPanel(contentArea, Items.pets, "pets", buyPetEgg, "AUTO PET BUYER", "🥚")
         end}
     }
     
-    for i, menu in pairs(menuButtons) do
-        createMenuButton(sidebar, menu.text, menu.icon, i, menu.onClick)
+    for i, menu in pairs(menuItems) do
+        createMenuButton(sidebar, menu.text, menu.emoji, i, menu.onClick)
     end
     
     -- Default to character panel
     createCharacterPanel(contentArea)
+    print("✅ Menu system created")
     
     -- Status bar updates
     spawn(function()
         while screenGui.Parent do
             local activeCount = 0
-            for category, items in pairs(ActiveStates) do
+            for category, items in pairs(IsActive) do
                 if type(items) == "table" then
                     for _, active in pairs(items) do
                         if active then activeCount = activeCount + 1 end
@@ -941,13 +1079,13 @@ local function initializeScript()
                 end
             end
             
-            local runtime = tick() - ScriptConfig.stats.startTime
+            local runtime = tick() - ScriptData.stats.startTime
             local hours = math.floor(runtime / 3600)
             local minutes = math.floor((runtime % 3600) / 60)
             local seconds = math.floor(runtime % 60)
             
             statusText.Text = string.format("🟢 Active: %d | Items: %d | Runtime: %02d:%02d:%02d", 
-                                           activeCount, ScriptConfig.stats.itemsBought, hours, minutes, seconds)
+                                           activeCount, ScriptData.stats.itemsBought, hours, minutes, seconds)
             
             wait(1)
         end
@@ -957,33 +1095,34 @@ local function initializeScript()
     player.CharacterAdded:Connect(function(character)
         character:WaitForChild("Humanoid")
         wait(1)
-        if ActiveStates.speed then
-            character.Humanoid.WalkSpeed = ScriptConfig.playerSpeed
+        if IsActive.speed then
+            character.Humanoid.WalkSpeed = ScriptData.playerSpeed
         end
     end)
     
     -- Apply current speed if character exists
-    if player.Character and player.Character:FindFirstChild("Humanoid") and ActiveStates.speed then
-        player.Character.Humanoid.WalkSpeed = ScriptConfig.playerSpeed
+    if player.Character and player.Character:FindFirstChild("Humanoid") and IsActive.speed then
+        player.Character.Humanoid.WalkSpeed = ScriptData.playerSpeed
     end
     
-    print("🌱 ULTIMATE GROW A GARDEN SCRIPT LOADED!")
-    print("✅ Version: " .. ScriptConfig.version)
-    print("📱 Mobile Support: " .. (isMobile and "YES" or "NO"))
-    print("📊 Total Seeds: " .. #GameItems.seeds)
-    print("⚙️ Total Gear: " .. #GameItems.gear)
-    print("🥚 Total Pets: " .. #GameItems.pets)
-    print("🚀 Click the green shortcut button to open GUI!")
+    print("✅ Script fully initialized!")
+    print("🚀 Click the green 🌱 button to open the GUI!")
+    
+    -- Send notification
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "🌱 Ultimate Grow Garden";
+        Text = "Script loaded! Click the green button to open GUI";
+        Duration = 5;
+    })
 end
 
 -- ========================================
--- 📱 ANTI-AFK & PERFORMANCE
+-- 🔄 ANTI-AFK SYSTEM
 -- ========================================
 
--- Anti-AFK system
 spawn(function()
+    local VirtualUser = game:GetService("VirtualUser")
     while true do
-        local VirtualUser = game:GetService("VirtualUser")
         VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
         wait(1)
         VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
@@ -991,26 +1130,8 @@ spawn(function()
     end
 end)
 
--- Performance optimization
-spawn(function()
-    while true do
-        for i = 1, 10 do
-            RunService.Heartbeat:Wait()
-        end
-        wait(0.1)
-    end
-end)
-
 -- ========================================
 -- 🚀 START THE SCRIPT
 -- ========================================
 
--- Initialize everything
 initializeScript()
-
--- Success message
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "🌱 ULTIMATE GROW GARDEN";
-    Text = "Script loaded successfully!\nClick the green button to open GUI";
-    Duration = 5;
-})
