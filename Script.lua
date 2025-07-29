@@ -1,944 +1,397 @@
--- Advanced Character Control GUI with Enhanced Effects
--- Created with Luau for Roblox Studio
+--!noverify
+
+--[[ 
+    Script by Best Players 0.1v
+    A powerful and elegant Roblox UI script with visual effects.
+    Inspired by Nat Hub Script.
+]]
 
 local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BestPlayersUI"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Configuration
-local Config = {
-    Theme = {
-        Dark = {
-            Primary = Color3.fromRGB(20, 20, 30),
-            Secondary = Color3.fromRGB(35, 35, 50),
-            Accent = Color3.fromRGB(100, 150, 255),
-            Text = Color3.fromRGB(255, 255, 255),
-            Success = Color3.fromRGB(46, 204, 113),
-            Error = Color3.fromRGB(231, 76, 60),
-            Background = Color3.fromRGB(15, 15, 25)
-        },
-        Light = {
-            Primary = Color3.fromRGB(240, 240, 245),
-            Secondary = Color3.fromRGB(220, 220, 230),
-            Accent = Color3.fromRGB(70, 130, 255),
-            Text = Color3.fromRGB(30, 30, 40),
-            Success = Color3.fromRGB(39, 174, 96),
-            Error = Color3.fromRGB(192, 57, 43),
-            Background = Color3.fromRGB(250, 250, 255)
-        }
-    },
-    CurrentTheme = "Dark",
-    DefaultSpeed = 16,
-    DefaultJump = 50,
-    MaxSpeed = 100,
-    MaxJump = 200
-}
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 800, 0, 500) -- Increased size for more content
+MainFrame.Position = UDim2.new(0.5, -400, 0.5, -250)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Dark background
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
 
--- State Management
-local State = {
-    SpeedValue = Config.DefaultSpeed,
-    JumpValue = Config.DefaultJump,
-    NoClipEnabled = false,
-    UIVisible = true,
-    Connections = {}
-}
+-- UI Corner for rounded edges
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
 
--- Utility Functions
-local function CreateTweenInfo(duration, style, direction)
-    return TweenInfo.new(
-        duration or 0.3,
-        style or Enum.EasingStyle.Quart,
-        direction or Enum.EasingDirection.Out
-    )
+-- UI Gradient for subtle background effect
+local UIGradient = Instance.new("UIGradient")
+UIGradient.Color = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(20, 20, 20))
+UIGradient.Rotation = 90
+UIGradient.Parent = MainFrame
+
+-- Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.Position = UDim2.new(0, 0, 0, 0)
+TitleBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Size = UDim2.new(1, 0, 1, 0)
+TitleLabel.Position = UDim2.new(0, 0, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "script by best players 0.1v"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.TextSize = 20
+TitleLabel.TextScaled = false
+TitleLabel.Parent = TitleBar
+
+-- Close Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Text = "X"
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.TextSize = 18
+CloseButton.Parent = TitleBar
+
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Vertical Menu (Left Panel)
+local MenuFrame = Instance.new("Frame")
+MenuFrame.Name = "MenuFrame"
+MenuFrame.Size = UDim2.new(0, 180, 1, -40) -- Adjusted size to fit below title bar
+MenuFrame.Position = UDim2.new(0, 0, 0, 40)
+MenuFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MenuFrame.BorderSizePixel = 0
+MenuFrame.Parent = MainFrame
+
+local MenuLayout = Instance.new("UIListLayout")
+MenuLayout.Name = "MenuLayout"
+MenuLayout.FillDirection = Enum.FillDirection.Vertical
+MenuLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+MenuLayout.Padding = UDim.new(0, 10)
+MenuLayout.Parent = MenuFrame
+
+-- Main Content Panel (Right Panel)
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Size = UDim2.new(1, -180, 1, -40) -- Adjusted size
+ContentFrame.Position = UDim2.new(0, 180, 0, 40)
+ContentFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ContentFrame.BorderSizePixel = 0
+ContentFrame.Parent = MainFrame
+
+-- Function to create a menu button
+local function createMenuButton(text, parentFrame)
+    local Button = Instance.new("TextButton")
+    Button.Name = text .. "Button"
+    Button.Size = UDim2.new(0.9, 0, 0, 40)
+    Button.BackgroundTransparency = 1
+    Button.Text = text
+    Button.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Button.Font = Enum.Font.SourceSansSemibold
+    Button.TextSize = 16
+    Button.TextScaled = false
+    Button.Parent = parentFrame
+
+    -- Hover effect
+    Button.MouseEnter:Connect(function()
+        Button:TweenBackgroundColor3(Color3.fromRGB(60, 60, 60), "Out", "Quad", 0.2, true)
+    end)
+    Button.MouseLeave:Connect(function()
+        Button:TweenBackgroundColor3(Color3.fromRGB(40, 40, 40), "Out", "Quad", 0.2, true)
+    end)
+
+    return Button
 end
 
-local function AnimateElement(element, properties, duration, style)
-    local tween = TweenService:Create(element, CreateTweenInfo(duration, style), properties)
-    tween:Play()
-    return tween
-end
+-- Function to create a toggle button
+local function createToggleButton(name, parentFrame, defaultState, onToggleCallback)
+    local ToggleFrame = Instance.new("Frame")
+    ToggleFrame.Name = name .. "ToggleFrame"
+    ToggleFrame.Size = UDim2.new(0.9, 0, 0, 40)
+    ToggleFrame.BackgroundTransparency = 1
+    ToggleFrame.Parent = parentFrame
 
-local function CreateGradient(colors, rotation)
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new(colors)
-    gradient.Rotation = rotation or 45
-    return gradient
-end
+    local Label = Instance.new("TextLabel")
+    Label.Name = "Label"
+    Label.Size = UDim2.new(0.7, 0, 1, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = name .. ":"
+    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Label.Font = Enum.Font.SourceSans
+    Label.TextSize = 16
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = ToggleFrame
 
-local function CreateCorner(radius)
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, radius or 8)
-    return corner
-end
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Name = "ToggleButton"
+    ToggleButton.Size = UDim2.new(0.2, 0, 0.8, 0)
+    ToggleButton.Position = UDim2.new(0.75, 0, 0.1, 0)
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.Font = Enum.Font.SourceSansBold
+    ToggleButton.TextSize = 14
+    ToggleButton.Parent = ToggleFrame
 
-local function CreateStroke(thickness, color)
-    local stroke = Instance.new("UIStroke")
-    stroke.Thickness = thickness or 1
-    stroke.Color = color or Color3.fromRGB(255, 255, 255)
-    stroke.Transparency = 0.8
-    return stroke
-end
+    local currentState = defaultState
 
-local function CreateShadow(parent, offset, blur)
-    local shadow = Instance.new("ImageLabel")
-    shadow.Name = "Shadow"
-    shadow.Parent = parent
-    shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxasset://textures/ui/Controls/DropShadow.png"
-    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-    shadow.ImageTransparency = 0.7
-    shadow.ScaleType = Enum.ScaleType.Slice
-    shadow.SliceCenter = Rect.new(49, 49, 450, 450)
-    shadow.Size = UDim2.new(1, blur or 20, 1, blur or 20)
-    shadow.Position = UDim2.new(0, offset or 5, 0, offset or 5)
-    shadow.ZIndex = parent.ZIndex - 1
-end
+    local function updateToggleVisual()
+        if currentState then
+            ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0) -- Green for on
+            ToggleButton.Text = "ON"
+        else
+            ToggleButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Red for off
+            ToggleButton.Text = "OFF"
+        end
+    end
 
--- Icon System
-local Icons = {
-    Character = "rbxassetid://4483345998",
-    Speed = "rbxassetid://4483362458",
-    Jump = "rbxassetid://4483345875",
-    NoClip = "rbxassetid://4483362748",
-    Settings = "rbxassetid://4483345737",
-    Check = "rbxassetid://4507466504",
-    Cross = "rbxassetid://4507466882",
-    Moon = "rbxassetid://4483345998",
-    Sun = "rbxassetid://4483362458"
-}
+    updateToggleVisual()
 
--- Theme Manager
-local ThemeManager = {}
-
-function ThemeManager:GetCurrentTheme()
-    return Config.Theme[Config.CurrentTheme]
-end
-
-function ThemeManager:SwitchTheme()
-    Config.CurrentTheme = Config.CurrentTheme == "Dark" and "Light" or "Dark"
-    self:ApplyTheme()
-end
-
-function ThemeManager:ApplyTheme()
-    local theme = self:GetCurrentTheme()
-    -- Theme application will be handled by individual components
-end
-
--- GUI Components
-local function CreateMainFrame()
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "AdvancedCharacterGUI"
-    screenGui.Parent = playerGui
-    screenGui.ResetOnSpawn = false
-    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Name = "MainFrame"
-    mainFrame.Parent = screenGui
-    mainFrame.BackgroundColor3 = ThemeManager:GetCurrentTheme().Primary
-    mainFrame.BorderSizePixel = 0
-    mainFrame.Position = UDim2.new(0.02, 0, 0.3, 0)
-    mainFrame.Size = UDim2.new(0, 350, 0, 450)
-    mainFrame.ClipsDescendants = true
-    
-    CreateCorner(12).Parent = mainFrame
-    CreateStroke(2, ThemeManager:GetCurrentTheme().Accent).Parent = mainFrame
-    CreateShadow(mainFrame, 8, 25)
-    
-    -- Animated background gradient
-    local bgGradient = CreateGradient({
-        ThemeManager:GetCurrentTheme().Primary,
-        ThemeManager:GetCurrentTheme().Secondary
-    }, 135)
-    bgGradient.Parent = mainFrame
-    
-    -- Pulse animation for background
-    spawn(function()
-        while true do
-            AnimateElement(bgGradient, {Rotation = bgGradient.Rotation + 360}, 10, Enum.EasingStyle.Linear)
-            wait(10)
+    ToggleButton.MouseButton1Click:Connect(function()
+        currentState = not currentState
+        updateToggleVisual()
+        if onToggleCallback then
+            onToggleCallback(currentState)
         end
     end)
-    
-    return screenGui, mainFrame
+
+    return ToggleFrame, ToggleButton, function() return currentState end
 end
 
-local function CreateHeader(parent)
-    local header = Instance.new("Frame")
-    header.Name = "Header"
-    header.Parent = parent
-    header.BackgroundColor3 = ThemeManager:GetCurrentTheme().Accent
-    header.BorderSizePixel = 0
-    header.Size = UDim2.new(1, 0, 0, 60)
-    header.Position = UDim2.new(0, 0, 0, 0)
-    
-    CreateCorner(12).Parent = header
-    
-    local headerGradient = CreateGradient({
-        ThemeManager:GetCurrentTheme().Accent,
-        Color3.fromRGB(
-            ThemeManager:GetCurrentTheme().Accent.R * 255 * 0.8,
-            ThemeManager:GetCurrentTheme().Accent.G * 255 * 0.8,
-            ThemeManager:GetCurrentTheme().Accent.B * 255 * 0.8
-        )
-    })
-    headerGradient.Parent = header
-    
-    -- Character Icon
-    local icon = Instance.new("ImageLabel")
-    icon.Name = "CharacterIcon"
-    icon.Parent = header
-    icon.BackgroundTransparency = 1
-    icon.Image = Icons.Character
-    icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    icon.Size = UDim2.new(0, 35, 0, 35)
-    icon.Position = UDim2.new(0, 15, 0.5, -17.5)
-    
-    -- Rotating animation for icon
-    spawn(function()
-        while true do
-            AnimateElement(icon, {Rotation = icon.Rotation + 360}, 3, Enum.EasingStyle.Linear)
-            wait(3)
-        end
-    end)
-    
-    -- Title
-    local title = Instance.new("TextLabel")
-    title.Name = "Title"
-    title.Parent = header
-    title.BackgroundTransparency = 1
-    title.Font = Enum.Font.GothamBold
-    title.Text = "CHARACTER CONTROL"
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.TextSize = 18
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Size = UDim2.new(1, -130, 1, 0)
-    title.Position = UDim2.new(0, 60, 0, 0)
-    
-    -- Settings Button
-    local settingsBtn = Instance.new("ImageButton")
-    settingsBtn.Name = "SettingsButton"
-    settingsBtn.Parent = header
-    settingsBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    settingsBtn.BackgroundTransparency = 0.9
-    settingsBtn.Image = Icons.Settings
-    settingsBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    settingsBtn.Size = UDim2.new(0, 30, 0, 30)
-    settingsBtn.Position = UDim2.new(1, -45, 0.5, -15)
-    
-    CreateCorner(6).Parent = settingsBtn
-    
-    return header, settingsBtn
-end
+-- Character Menu Button
+local CharacterButton = createMenuButton("Character", MenuFrame)
 
-local function CreateControlSlider(parent, name, iconId, minVal, maxVal, currentVal, yPos)
-    local container = Instance.new("Frame")
-    container.Name = name .. "Container"
-    container.Parent = parent
-    container.BackgroundColor3 = ThemeManager:GetCurrentTheme().Secondary
-    container.BorderSizePixel = 0
-    container.Position = UDim2.new(0, 15, 0, yPos)
-    container.Size = UDim2.new(1, -30, 0, 80)
-    
-    CreateCorner(10).Parent = container
-    CreateStroke(1, ThemeManager:GetCurrentTheme().Accent).Parent = container
-    
-    -- Icon
-    local icon = Instance.new("ImageLabel")
-    icon.Name = "Icon"
-    icon.Parent = container
-    icon.BackgroundTransparency = 1
-    icon.Image = iconId
-    icon.ImageColor3 = ThemeManager:GetCurrentTheme().Accent
-    icon.Size = UDim2.new(0, 25, 0, 25)
-    icon.Position = UDim2.new(0, 15, 0, 12)
-    
-    -- Label
-    local label = Instance.new("TextLabel")
-    label.Name = "Label"
-    label.Parent = container
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.GothamSemibold
-    label.Text = name:upper()
-    label.TextColor3 = ThemeManager:GetCurrentTheme().Text
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Size = UDim2.new(1, -120, 0, 20)
-    label.Position = UDim2.new(0, 50, 0, 8)
-    
-    -- Value Display
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Name = "ValueLabel"
-    valueLabel.Parent = container
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.Font = Enum.Font.GothamBold
-    valueLabel.Text = tostring(currentVal)
-    valueLabel.TextColor3 = ThemeManager:GetCurrentTheme().Accent
-    valueLabel.TextSize = 16
-    valueLabel.Size = UDim2.new(0, 60, 0, 20)
-    valueLabel.Position = UDim2.new(1, -70, 0, 8)
-    
-    -- Slider Background
-    local sliderBg = Instance.new("Frame")
-    sliderBg.Name = "SliderBackground"
-    sliderBg.Parent = container
-    sliderBg.BackgroundColor3 = ThemeManager:GetCurrentTheme().Primary
-    sliderBg.BorderSizePixel = 0
-    sliderBg.Position = UDim2.new(0, 15, 0, 45)
-    sliderBg.Size = UDim2.new(1, -30, 0, 20)
-    
-    CreateCorner(10).Parent = sliderBg
-    
-    -- Slider Fill
-    local sliderFill = Instance.new("Frame")
-    sliderFill.Name = "SliderFill"
-    sliderFill.Parent = sliderBg
-    sliderFill.BackgroundColor3 = ThemeManager:GetCurrentTheme().Accent
-    sliderFill.BorderSizePixel = 0
-    sliderFill.Size = UDim2.new((currentVal - minVal) / (maxVal - minVal), 0, 1, 0)
-    
-    CreateCorner(10).Parent = sliderFill
-    
-    local fillGradient = CreateGradient({
-        ThemeManager:GetCurrentTheme().Accent,
-        Color3.fromRGB(
-            ThemeManager:GetCurrentTheme().Accent.R * 255 * 1.2,
-            ThemeManager:GetCurrentTheme().Accent.G * 255 * 1.2,
-            ThemeManager:GetCurrentTheme().Accent.B * 255 * 1.2
-        )
-    })
-    fillGradient.Parent = sliderFill
-    
-    -- Slider Knob
-    local knob = Instance.new("Frame")
-    knob.Name = "Knob"
-    knob.Parent = sliderBg
-    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    knob.BorderSizePixel = 0
-    knob.Size = UDim2.new(0, 24, 0, 24)
-    knob.Position = UDim2.new((currentVal - minVal) / (maxVal - minVal), -12, 0.5, -12)
-    
-    CreateCorner(12).Parent = knob
-    CreateShadow(knob, 2, 8)
-    
-    return container, sliderBg, sliderFill, knob, valueLabel
-end
+-- Character Sub-Menu (initially hidden)
+local CharacterPanel = Instance.new("Frame")
+CharacterPanel.Name = "CharacterPanel"
+CharacterPanel.Size = UDim2.new(1, 0, 1, 0)
+CharacterPanel.Position = UDim2.new(0, 0, 0, 0)
+CharacterPanel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+CharacterPanel.BorderSizePixel = 0
+CharacterPanel.Visible = false -- Hidden by default
+CharacterPanel.Parent = ContentFrame
 
-local function CreateToggleButton(parent, name, iconId, yPos)
-    local container = Instance.new("Frame")
-    container.Name = name .. "Container"
-    container.Parent = parent
-    container.BackgroundColor3 = ThemeManager:GetCurrentTheme().Secondary
-    container.BorderSizePixel = 0
-    container.Position = UDim2.new(0, 15, 0, yPos)
-    container.Size = UDim2.new(1, -30, 0, 60)
-    
-    CreateCorner(10).Parent = container
-    CreateStroke(1, ThemeManager:GetCurrentTheme().Accent).Parent = container
-    
-    -- Icon
-    local icon = Instance.new("ImageLabel")
-    icon.Name = "Icon"
-    icon.Parent = container
-    icon.BackgroundTransparency = 1
-    icon.Image = iconId
-    icon.ImageColor3 = ThemeManager:GetCurrentTheme().Accent
-    icon.Size = UDim2.new(0, 25, 0, 25)
-    icon.Position = UDim2.new(0, 15, 0.5, -12.5)
-    
-    -- Label
-    local label = Instance.new("TextLabel")
-    label.Name = "Label"
-    label.Parent = container
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.GothamSemibold
-    label.Text = name:upper()
-    label.TextColor3 = ThemeManager:GetCurrentTheme().Text
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Size = UDim2.new(1, -150, 1, 0)
-    label.Position = UDim2.new(0, 50, 0, 0)
-    
-    -- Toggle Button
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Name = "ToggleButton"
-    toggleBtn.Parent = container
-    toggleBtn.BackgroundColor3 = ThemeManager:GetCurrentTheme().Error
-    toggleBtn.BorderSizePixel = 0
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.Text = ""
-    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.TextSize = 12
-    toggleBtn.Size = UDim2.new(0, 80, 0, 35)
-    toggleBtn.Position = UDim2.new(1, -95, 0.5, -17.5)
-    
-    CreateCorner(8).Parent = toggleBtn
-    
-    -- Toggle Icon
-    local toggleIcon = Instance.new("ImageLabel")
-    toggleIcon.Name = "ToggleIcon"
-    toggleIcon.Parent = toggleBtn
-    toggleIcon.BackgroundTransparency = 1
-    toggleIcon.Image = Icons.Cross
-    toggleIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    toggleIcon.Size = UDim2.new(0, 20, 0, 20)
-    toggleIcon.Position = UDim2.new(0.5, -10, 0.5, -10)
-    
-    -- Status Text
-    local statusText = Instance.new("TextLabel")
-    statusText.Name = "StatusText"
-    statusText.Parent = toggleBtn
-    statusText.BackgroundTransparency = 1
-    statusText.Font = Enum.Font.GothamSemibold
-    statusText.Text = "OFF"
-    statusText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    statusText.TextSize = 10
-    statusText.Size = UDim2.new(1, 0, 0, 12)
-    statusText.Position = UDim2.new(0, 0, 1, -15)
-    
-    return container, toggleBtn, toggleIcon, statusText
-end
+local CharacterLayout = Instance.new("UIListLayout")
+CharacterLayout.Name = "CharacterLayout"
+CharacterLayout.FillDirection = Enum.FillDirection.Vertical
+CharacterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+CharacterLayout.Padding = UDim.new(0, 10)
+CharacterLayout.Parent = CharacterPanel
 
-local function CreateSettingsPanel(parent)
-    local settingsPanel = Instance.new("Frame")
-    settingsPanel.Name = "SettingsPanel"
-    settingsPanel.Parent = parent
-    settingsPanel.BackgroundColor3 = ThemeManager:GetCurrentTheme().Secondary
-    settingsPanel.BorderSizePixel = 0
-    settingsPanel.Position = UDim2.new(0, 15, 0, 380)
-    settingsPanel.Size = UDim2.new(1, -30, 0, 55)
-    settingsPanel.Visible = false
-    
-    CreateCorner(10).Parent = settingsPanel
-    CreateStroke(1, ThemeManager:GetCurrentTheme().Accent).Parent = settingsPanel
-    
-    -- Theme Toggle
-    local themeLabel = Instance.new("TextLabel")
-    themeLabel.Name = "ThemeLabel"
-    themeLabel.Parent = settingsPanel
-    themeLabel.BackgroundTransparency = 1
-    themeLabel.Font = Enum.Font.GothamSemibold
-    themeLabel.Text = "THEME"
-    themeLabel.TextColor3 = ThemeManager:GetCurrentTheme().Text
-    themeLabel.TextSize = 12
-    themeLabel.Size = UDim2.new(0, 60, 1, 0)
-    themeLabel.Position = UDim2.new(0, 15, 0, 0)
-    
-    local themeBtn = Instance.new("TextButton")
-    themeBtn.Name = "ThemeButton"
-    themeBtn.Parent = settingsPanel
-    themeBtn.BackgroundColor3 = ThemeManager:GetCurrentTheme().Accent
-    themeBtn.BorderSizePixel = 0
-    themeBtn.Font = Enum.Font.GothamBold
-    themeBtn.Text = Config.CurrentTheme:upper()
-    themeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    themeBtn.TextSize = 11
-    themeBtn.Size = UDim2.new(0, 70, 0, 30)
-    themeBtn.Position = UDim2.new(1, -85, 0.5, -15)
-    
-    CreateCorner(6).Parent = themeBtn
-    
-    local themeIcon = Instance.new("ImageLabel")
-    themeIcon.Name = "ThemeIcon"
-    themeIcon.Parent = themeBtn
-    themeIcon.BackgroundTransparency = 1
-    themeIcon.Image = Config.CurrentTheme == "Dark" and Icons.Moon or Icons.Sun
-    themeIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    themeIcon.Size = UDim2.new(0, 16, 0, 16)
-    themeIcon.Position = UDim2.new(0, 5, 0.5, -8)
-    
-    return settingsPanel, themeBtn, themeIcon
-end
+-- Speed Section
+local SpeedFrame = Instance.new("Frame")
+SpeedFrame.Name = "SpeedFrame"
+SpeedFrame.Size = UDim2.new(0.9, 0, 0, 80)
+SpeedFrame.BackgroundTransparency = 1
+SpeedFrame.Parent = CharacterPanel
 
--- Main GUI Creation
-local function CreateGUI()
-    local screenGui, mainFrame = CreateMainFrame()
-    local header, settingsBtn = CreateHeader(mainFrame)
-    
-    -- Character Controls
-    local speedContainer, speedSliderBg, speedSliderFill, speedKnob, speedValueLabel = 
-        CreateControlSlider(mainFrame, "Speed", Icons.Speed, 16, Config.MaxSpeed, State.SpeedValue, 80)
-    
-    local jumpContainer, jumpSliderBg, jumpSliderFill, jumpKnob, jumpValueLabel = 
-        CreateControlSlider(mainFrame, "Jump", Icons.Jump, 16, Config.MaxJump, State.JumpValue, 180)
-    
-    local noclipContainer, noclipToggleBtn, noclipToggleIcon, noclipStatusText = 
-        CreateToggleButton(mainFrame, "NoClip", Icons.NoClip, 280)
-    
-    -- Settings Panel
-    local settingsPanel, themeBtn, themeIcon = CreateSettingsPanel(mainFrame)
-    
-    -- Slider Logic
-    local function SetupSlider(sliderBg, sliderFill, knob, valueLabel, minVal, maxVal, currentVal, callback)
-        local dragging = false
-        
-        local function UpdateSlider(value)
-            value = math.clamp(value, minVal, maxVal)
-            local percentage = (value - minVal) / (maxVal - minVal)
-            
-            AnimateElement(sliderFill, {Size = UDim2.new(percentage, 0, 1, 0)}, 0.1)
-            AnimateElement(knob, {Position = UDim2.new(percentage, -12, 0.5, -12)}, 0.1)
-            
-            valueLabel.Text = tostring(math.floor(value))
-            
-            if callback then
-                callback(value)
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Name = "SpeedLabel"
+SpeedLabel.Size = UDim2.new(1, 0, 0.4, 0)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "WalkSpeed:"
+SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedLabel.Font = Enum.Font.SourceSans
+SpeedLabel.TextSize = 16
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SpeedLabel.Parent = SpeedFrame
+
+local SpeedTextBox = Instance.new("TextBox")
+SpeedTextBox.Name = "SpeedTextBox"
+SpeedTextBox.Size = UDim2.new(0.6, 0, 0.5, 0)
+SpeedTextBox.Position = UDim2.new(0, 0, 0.5, 0)
+SpeedTextBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+SpeedTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedTextBox.PlaceholderText = "Enter speed (e.g., 30)"
+SpeedTextBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+SpeedTextBox.Text = "16" -- Default speed
+SpeedTextBox.Font = Enum.Font.SourceSans
+SpeedTextBox.TextSize = 14
+SpeedTextBox.Parent = SpeedFrame
+
+local ActivateSpeedButton = Instance.new("TextButton")
+ActivateSpeedButton.Name = "ActivateSpeedButton"
+ActivateSpeedButton.Size = UDim2.new(0.3, 0, 0.5, 0)
+ActivateSpeedButton.Position = UDim2.new(0.65, 0, 0.5, 0)
+ActivateSpeedButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0) -- Green for activate
+ActivateSpeedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ActivateSpeedButton.Text = "Activate"
+ActivateSpeedButton.Font = Enum.Font.SourceSansBold
+ActivateSpeedButton.TextSize = 16
+ActivateSpeedButton.Parent = SpeedFrame
+
+ActivateSpeedButton.MouseButton1Click:Connect(function()
+    local success, speed = pcall(tonumber, SpeedTextBox.Text)
+    if success and speed then
+        LocalPlayer.Character.Humanoid.WalkSpeed = speed
+        print("WalkSpeed set to: " .. speed)
+    else
+        warn("Invalid speed value: " .. SpeedTextBox.Text)
+    end
+end)
+
+-- No Clip Toggle
+local noClipEnabled = false
+local NoClipToggleFrame, NoClipToggleButton, getNoClipState = createToggleButton("No Clip", CharacterPanel, false, function(state)
+    noClipEnabled = state
+    if LocalPlayer.Character then
+        for i, v in pairs(LocalPlayer.Character:GetChildren()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = not state
             end
         end
-        
-        knob.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                AnimateElement(knob, {Size = UDim2.new(0, 28, 0, 28)}, 0.1)
-            end
-        end)
-        
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 and dragging then
+    end
+    print("No Clip " .. (state and "Enabled" or "Disabled"))
+end)
+
+-- Player Avatar
+local PlayerAvatar = Instance.new("ImageLabel")
+PlayerAvatar.Name = "PlayerAvatar"
+PlayerAvatar.Size = UDim2.new(0, 100, 0, 100)
+PlayerAvatar.Position = UDim2.new(0.5, -50, 1, -140) -- Position at the bottom of the menu frame
+PlayerAvatar.BackgroundTransparency = 1
+PlayerAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=420&h=420" -- Roblox avatar thumbnail
+PlayerAvatar.Parent = MenuFrame
+
+local AvatarCorner = Instance.new("UICorner")
+AvatarCorner.CornerRadius = UDim.new(0, 50) -- Make it circular
+AvatarCorner.Parent = PlayerAvatar
+
+-- Teleport Section (New Feature)
+local TeleportButton = createMenuButton("Teleport", MenuFrame)
+
+local TeleportPanel = Instance.new("Frame")
+TeleportPanel.Name = "TeleportPanel"
+TeleportPanel.Size = UDim2.new(1, 0, 1, 0)
+TeleportPanel.Position = UDim2.new(0, 0, 0, 0)
+TeleportPanel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+TeleportPanel.BorderSizePixel = 0
+TeleportPanel.Visible = false -- Hidden by default
+TeleportPanel.Parent = ContentFrame
+
+local TeleportLayout = Instance.new("UIListLayout")
+TeleportLayout.Name = "TeleportLayout"
+TeleportLayout.FillDirection = Enum.FillDirection.Vertical
+TeleportLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+TeleportLayout.Padding = UDim.new(0, 10)
+TeleportLayout.Parent = TeleportPanel
+
+local TeleportLabel = Instance.new("TextLabel")
+TeleportLabel.Name = "TeleportLabel"
+TeleportLabel.Size = UDim2.new(0.9, 0, 0, 30)
+TeleportLabel.BackgroundTransparency = 1
+TeleportLabel.Text = "Teleport to:"
+TeleportLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TeleportLabel.Font = Enum.Font.SourceSans
+TeleportLabel.TextSize = 16
+TeleportLabel.TextXAlignment = Enum.TextXAlignment.Left
+TeleportLabel.Parent = TeleportPanel
+
+local TeleportTextBox = Instance.new("TextBox")
+TeleportTextBox.Name = "TeleportTextBox"
+TeleportTextBox.Size = UDim2.new(0.9, 0, 0, 40)
+TeleportTextBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+TeleportTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+TeleportTextBox.PlaceholderText = "Enter X, Y, Z coordinates (e.g., 0, 100, 0)"
+TeleportTextBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+TeleportTextBox.Font = Enum.Font.SourceSans
+TeleportTextBox.TextSize = 14
+TeleportTextBox.Parent = TeleportPanel
+
+local TeleportButtonExecute = Instance.new("TextButton")
+TeleportButtonExecute.Name = "TeleportButtonExecute"
+TeleportButtonExecute.Size = UDim2.new(0.9, 0, 0, 40)
+TeleportButtonExecute.BackgroundColor3 = Color3.fromRGB(0, 100, 150) -- Blue for teleport
+TeleportButtonExecute.TextColor3 = Color3.fromRGB(255, 255, 255)
+TeleportButtonExecute.Text = "Teleport"
+TeleportButtonExecute.Font = Enum.Font.SourceSansBold
+TeleportButtonExecute.TextSize = 16
+TeleportButtonExecute.Parent = TeleportPanel
+
+TeleportButtonExecute.MouseButton1Click:Connect(function()
+    local coordsStr = TeleportTextBox.Text
+    local coords = {}
+    for s in string.gmatch(coordsStr, "[^,]+") do
+        table.insert(coords, tonumber(s))
+    end
+
+    if #coords == 3 and LocalPlayer.Character and LocalPlayer.Character.HumanoidRootPart then
+        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(coords[1], coords[2], coords[3])
+        print("Teleported to: " .. coordsStr)
+    else
+        warn("Invalid coordinates or character not found: " .. coordsStr)
+    end
+end)
+
+-- Function to hide all content panels
+local function hideAllPanels()
+    for _, panel in pairs(ContentFrame:GetChildren()) do
+        if panel:IsA("Frame") and panel.Name:match("Panel$") then
+            panel.Visible = false
+        end
+    end
+end
+
+-- Menu button click logic
+CharacterButton.MouseButton1Click:Connect(function()
+    hideAllPanels()
+    CharacterPanel.Visible = true
+end)
+
+TeleportButton.MouseButton1Click:Connect(function()
+    hideAllPanels()
+    TeleportPanel.Visible = true
+end)
+
+-- Initial visibility setup
+CharacterPanel.Visible = true -- Show Character panel by default
+
+-- Drag functionality for MainFrame
+local dragging
+local dragInput
+local dragStart
+local startPosition
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragInput = input
+        dragStart = input.Position
+        startPosition = MainFrame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.Ended then
                 dragging = false
-                AnimateElement(knob, {Size = UDim2.new(0, 24, 0, 24)}, 0.1)
-            end
-        end)
-        
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                local mouse = Players.LocalPlayer:GetMouse()
-                local relativeX = mouse.X - sliderBg.AbsolutePosition.X
-                local percentage = math.clamp(relativeX / sliderBg.AbsoluteSize.X, 0, 1)
-                local value = minVal + (maxVal - minVal) * percentage
-                
-                UpdateSlider(value)
-            end
-        end)
-        
-        UpdateSlider(currentVal)
-    end
-    
-    -- Setup Speed Slider
-    SetupSlider(speedSliderBg, speedSliderFill, speedKnob, speedValueLabel, 16, Config.MaxSpeed, State.SpeedValue, function(value)
-        State.SpeedValue = value
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid.WalkSpeed = value
-        end
-    end)
-    
-    -- Setup Jump Slider
-    SetupSlider(jumpSliderBg, jumpSliderFill, jumpKnob, jumpValueLabel, 16, Config.MaxJump, State.JumpValue, function(value)
-        State.JumpValue = value
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid.JumpPower = value
-        end
-    end)
-    
-    -- NoClip Toggle Logic
-    local function ToggleNoClip()
-        State.NoClipEnabled = not State.NoClipEnabled
-        
-        if State.NoClipEnabled then
-            AnimateElement(noclipToggleBtn, {BackgroundColor3 = ThemeManager:GetCurrentTheme().Success}, 0.2)
-            noclipToggleIcon.Image = Icons.Check
-            noclipStatusText.Text = "ON"
-            
-            -- Enable NoClip
-            State.Connections.NoClip = RunService.Stepped:Connect(function()
-                if player.Character then
-                    for _, part in pairs(player.Character:GetChildren()) do
-                        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                            part.CanCollide = false
-                        end
-                    end
-                end
-            end)
-        else
-            AnimateElement(noclipToggleBtn, {BackgroundColor3 = ThemeManager:GetCurrentTheme().Error}, 0.2)
-            noclipToggleIcon.Image = Icons.Cross
-            noclipStatusText.Text = "OFF"
-            
-            -- Disable NoClip
-            if State.Connections.NoClip then
-                State.Connections.NoClip:Disconnect()
-                State.Connections.NoClip = nil
-            end
-            
-            if player.Character then
-                for _, part in pairs(player.Character:GetChildren()) do
-                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                        part.CanCollide = true
-                    end
-                end
-            end
-        end
-        
-        -- Pulse animation
-        local originalSize = noclipToggleBtn.Size
-        AnimateElement(noclipToggleBtn, {Size = UDim2.new(0, 85, 0, 38)}, 0.1)
-        wait(0.1)
-        AnimateElement(noclipToggleBtn, {Size = originalSize}, 0.1)
-    end
-    
-    noclipToggleBtn.MouseButton1Click:Connect(ToggleNoClip)
-    
-    -- Settings Panel Logic
-    local settingsPanelVisible = false
-    
-    settingsBtn.MouseButton1Click:Connect(function()
-        settingsPanelVisible = not settingsPanelVisible
-        
-        if settingsPanelVisible then
-            settingsPanel.Visible = true
-            AnimateElement(settingsPanel, {Position = UDim2.new(0, 15, 0, 320)}, 0.3)
-            AnimateElement(mainFrame, {Size = UDim2.new(0, 350, 0, 400)}, 0.3)
-        else
-            AnimateElement(settingsPanel, {Position = UDim2.new(0, 15, 0, 380)}, 0.3)
-            AnimateElement(mainFrame, {Size = UDim2.new(0, 350, 0, 350)}, 0.3)
-            wait(0.3)
-            settingsPanel.Visible = false
-        end
-        
-        -- Rotate settings icon
-        AnimateElement(settingsBtn, {Rotation = settingsBtn.Rotation + 180}, 0.3)
-    end)
-    
-    -- Theme Toggle Logic
-    themeBtn.MouseButton1Click:Connect(function()
-        ThemeManager:SwitchTheme()
-        themeBtn.Text = Config.CurrentTheme:upper()
-        themeIcon.Image = Config.CurrentTheme == "Dark" and Icons.Moon or Icons.Sun
-        
-        -- Update all UI elements with new theme
-        -- This would require rebuilding the GUI or updating each element individually
-        AnimateElement(themeBtn, {BackgroundColor3 = ThemeManager:GetCurrentTheme().Accent}, 0.3)
-    end)
-    
-    -- Entrance Animation
-    mainFrame.Position = UDim2.new(-0.5, 0, 0.3, 0)
-    AnimateElement(mainFrame, {Position = UDim2.new(0.02, 0, 0.3, 0)}, 0.8, Enum.EasingStyle.Back)
-    
-    -- Toggle GUI Visibility
-    UserInputService.InputBegan:Connect(function(key)
-        if key.KeyCode == Enum.KeyCode.Insert then
-            State.UIVisible = not State.UIVisible
-            
-            if State.UIVisible then
-                AnimateElement(mainFrame, {
-                    Position = UDim2.new(0.02, 0, 0.3, 0),
-                    Size = UDim2.new(0, 350, 0, 450)
-                }, 0.5, Enum.EasingStyle.Back)
-            else
-                AnimateElement(mainFrame, {
-                    Position = UDim2.new(-0.5, 0, 0.3, 0),
-                    Size = UDim2.new(0, 0, 0, 0)
-                }, 0.5, Enum.EasingStyle.Back)
-            end
-        end
-    end)
-    
-    return screenGui
-end
-
--- Initialize
-local gui = CreateGUI()
-
--- Character Respawn Handler
-player.CharacterAdded:Connect(function(character)
-    wait(1) -- Wait for character to fully load
-    
-    local humanoid = character:WaitForChild("Humanoid")
-    
-    -- Apply current settings to new character
-    humanoid.WalkSpeed = State.SpeedValue
-    humanoid.JumpPower = State.JumpValue
-    
-    -- Reapply NoClip if it was enabled
-    if State.NoClipEnabled then
-        if State.Connections.NoClip then
-            State.Connections.NoClip:Disconnect()
-        end
-        
-        State.Connections.NoClip = RunService.Stepped:Connect(function()
-            if player.Character then
-                for _, part in pairs(player.Character:GetChildren()) do
-                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                        part.CanCollide = false
-                    end
-                end
             end
         end)
     end
 end)
 
--- Advanced Visual Effects System
-local EffectsManager = {}
-
-function EffectsManager:CreateParticleEffect(parent, color)
-    local attachment = Instance.new("Attachment")
-    attachment.Parent = parent
-    
-    local particles = Instance.new("ParticleEmitter")
-    particles.Parent = attachment
-    particles.Color = ColorSequence.new(color or ThemeManager:GetCurrentTheme().Accent)
-    particles.Size = NumberSequence.new{
-        NumberSequenceKeypoint.new(0, 0.1),
-        NumberSequenceKeypoint.new(0.5, 0.3),
-        NumberSequenceKeypoint.new(1, 0)
-    }
-    particles.Transparency = NumberSequence.new{
-        NumberSequenceKeypoint.new(0, 0.8),
-        NumberSequenceKeypoint.new(0.7, 0.5),
-        NumberSequenceKeypoint.new(1, 1)
-    }
-    particles.Lifetime = NumberRange.new(0.5, 1.2)
-    particles.Rate = 50
-    particles.VelocityInheritance = 0.5
-    particles.Speed = NumberRange.new(2)
-    particles.SpreadAngle = Vector2.new(45, 45)
-    
-    return particles
-end
-
-function EffectsManager:CreateRippleEffect(position, color)
-    local ripple = Instance.new("SelectionBox")
-    ripple.Adornee = workspace
-    ripple.Color3 = color or ThemeManager:GetCurrentTheme().Accent
-    ripple.LineThickness = 0.2
-    ripple.Transparency = 0.5
-    
-    -- Animate ripple expansion
-    local startSize = Vector3.new(0, 0, 0)
-    local endSize = Vector3.new(20, 20, 20)
-    
-    spawn(function()
-        for i = 0, 1, 0.05 do
-            local currentSize = startSize:Lerp(endSize, i)
-            ripple.Size = currentSize
-            ripple.Transparency = 0.5 + (i * 0.5)
-            wait(0.02)
-        end
-        ripple:Destroy()
-    end)
-end
-
--- Sound Effects System
-local SoundManager = {}
-
-function SoundManager:PlaySound(soundId, volume, pitch)
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://" .. tostring(soundId)
-    sound.Volume = volume or 0.5
-    sound.Pitch = pitch or 1
-    sound.Parent = SoundService
-    
-    sound:Play()
-    
-    sound.Ended:Connect(function()
-        sound:Destroy()
-    end)
-    
-    return sound
-end
-
--- Enhanced Notification System
-local NotificationManager = {}
-
-function NotificationManager:ShowNotification(message, type, duration)
-    local notificationGui = Instance.new("ScreenGui")
-    notificationGui.Name = "NotificationGui"
-    notificationGui.Parent = playerGui
-    
-    local notification = Instance.new("Frame")
-    notification.Name = "Notification"
-    notification.Parent = notificationGui
-    notification.BackgroundColor3 = type == "success" and ThemeManager:GetCurrentTheme().Success or 
-                                   type == "error" and ThemeManager:GetCurrentTheme().Error or 
-                                   ThemeManager:GetCurrentTheme().Accent
-    notification.BorderSizePixel = 0
-    notification.Position = UDim2.new(0.5, -150, 0, -60)
-    notification.Size = UDim2.new(0, 300, 0, 50)
-    
-    CreateCorner(8).Parent = notification
-    CreateShadow(notification, 5, 15)
-    
-    local notificationText = Instance.new("TextLabel")
-    notificationText.Name = "NotificationText"
-    notificationText.Parent = notification
-    notificationText.BackgroundTransparency = 1
-    notificationText.Font = Enum.Font.GothamSemibold
-    notificationText.Text = message
-    notificationText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    notificationText.TextSize = 14
-    notificationText.Size = UDim2.new(1, -20, 1, 0)
-    notificationText.Position = UDim2.new(0, 10, 0, 0)
-    
-    -- Animate notification
-    AnimateElement(notification, {Position = UDim2.new(0.5, -150, 0, 20)}, 0.5, Enum.EasingStyle.Back)
-    
-    -- Auto-hide notification
-    spawn(function()
-        wait(duration or 3)
-        AnimateElement(notification, {
-            Position = UDim2.new(0.5, -150, 0, -60),
-            Transparency = 1
-        }, 0.3)
-        AnimateElement(notificationText, {TextTransparency = 1}, 0.3)
-        wait(0.3)
-        notificationGui:Destroy()
-    end)
-end
-
--- Performance Monitor
-local PerformanceMonitor = {}
-
-function PerformanceMonitor:CreateFPSCounter(parent)
-    local fpsLabel = Instance.new("TextLabel")
-    fpsLabel.Name = "FPSCounter"
-    fpsLabel.Parent = parent
-    fpsLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    fpsLabel.BackgroundTransparency = 0.5
-    fpsLabel.BorderSizePixel = 0
-    fpsLabel.Font = Enum.Font.Code
-    fpsLabel.Text = "FPS: 60"
-    fpsLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-    fpsLabel.TextSize = 12
-    fpsLabel.Size = UDim2.new(0, 80, 0, 25)
-    fpsLabel.Position = UDim2.new(1, -90, 0, 10)
-    
-    CreateCorner(4).Parent = fpsLabel
-    
-    local lastTime = tick()
-    local frameCount = 0
-    
-    RunService.Heartbeat:Connect(function()
-        frameCount = frameCount + 1
-        local currentTime = tick()
-        
-        if currentTime - lastTime >= 1 then
-            local fps = math.floor(frameCount / (currentTime - lastTime))
-            fpsLabel.Text = "FPS: " .. fps
-            
-            -- Color coding for FPS
-            if fps >= 45 then
-                fpsLabel.TextColor3 = Color3.fromRGB(0, 255, 0) -- Green
-            elseif fps >= 25 then
-                fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 0) -- Yellow
-            else
-                fpsLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- Red
-            end
-            
-            frameCount = 0
-            lastTime = currentTime
-        end
-    end)
-    
-    return fpsLabel
-end
-
--- Advanced Keybind System
-local KeybindManager = {}
-KeybindManager.Keybinds = {
-    ToggleGUI = Enum.KeyCode.Insert,
-    SpeedBoost = Enum.KeyCode.LeftShift,
-    NoClipToggle = Enum.KeyCode.N,
-    ResetCharacter = Enum.KeyCode.R
-}
-
-function KeybindManager:SetupKeybinds()
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        
-        if input.KeyCode == self.Keybinds.SpeedBoost then
-            -- Temporary speed boost
-            if player.Character and player.Character:FindFirstChild("Humanoid") then
-                local humanoid = player.Character.Humanoid
-                local originalSpeed = humanoid.WalkSpeed
-                humanoid.WalkSpeed = math.min(originalSpeed * 2, Config.MaxSpeed)
-                
-                NotificationManager:ShowNotification("Speed Boost Activated!", "success", 1)
-                SoundManager:PlaySound(131961136, 0.3, 1.5)
-                EffectsManager:CreateRippleEffect(player.Character.HumanoidRootPart.Position, Color3.fromRGB(255, 255, 0))
-            end
-        elseif input.KeyCode == self.Keybinds.NoClipToggle then
-            -- Quick NoClip toggle
-            State.NoClipEnabled = not State.NoClipEnabled
-            NotificationManager:ShowNotification(
-                "NoClip " .. (State.NoClipEnabled and "Enabled" or "Disabled"),
-                State.NoClipEnabled and "success" or "error",
-                2
-            )
-        elseif input.KeyCode == self.Keybinds.ResetCharacter then
-            -- Reset character stats
-            State.SpeedValue = Config.DefaultSpeed
-            State.JumpValue = Config.DefaultJump
-            State.NoClipEnabled = false
-            
-            if player.Character and player.Character:FindFirstChild("Humanoid") then
-                local humanoid = player.Character.Humanoid
-                humanoid.WalkSpeed = Config.DefaultSpeed
-                humanoid.JumpPower = Config.DefaultJump
-            end
-            
-            NotificationManager:ShowNotification("Character Stats Reset!", "success", 2)
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        
-        if input.KeyCode == self.Keybinds.SpeedBoost then
-            -- Return to normal speed
-            if player.Character and player.Character:FindFirstChild("Humanoid") then
-                player.Character.Humanoid.WalkSpeed = State.SpeedValue
-            end
-        end
-    end)
-end
-
--- Initialize Advanced Systems
-KeybindManager:SetupKeybinds()
-
--- Add FPS Counter to main GUI
-if gui then
-    local mainFrame = gui:FindFirstChild("MainFrame")
-    if mainFrame then
-        PerformanceMonitor:CreateFPSCounter(mainFrame)
-    end
-end
-
--- Welcome Message
-spawn(function()
-    wait(1)
-    NotificationManager:ShowNotification("Advanced Character Control Loaded!", "success", 4)
-    SoundManager:PlaySound(131961136, 0.4, 1.2)
-end)
-
--- Cleanup function
-local function Cleanup()
-    for _, connection in pairs(State.Connections) do
-        if connection then
-            connection:Disconnect()
-        end
-    end
-    
-    if gui then
-        gui:Destroy()
-    end
-end
-
--- Connect cleanup to player leaving
-Players.PlayerRemoving:Connect(function(leavingPlayer)
-    if leavingPlayer == player then
-        Cleanup()
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPosition.X.Scale, startPosition.X.Offset + delta.X, startPosition.Y.Scale, startPosition.Y.Offset + delta.Y)
     end
 end)
 
-print("Advanced Character Control GUI v2.0 - Created with Enhanced Effects & Features")
-print("Controls:")
-print("- INSERT: Toggle GUI")
-print("- LEFT SHIFT (Hold): Speed Boost")
-print("- N: Quick NoClip Toggle") 
-print("- R: Reset Character Stats")
-print("Enjoy the enhanced experience!")
+print("UI Script Loaded!")
+
+
