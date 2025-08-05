@@ -1,16 +1,15 @@
--- NatHub Style Character Controller - Professional Edition
--- Advanced Roblox UI matching NatHub design with professional icons
-
+--TERAB PROGRAMING
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local GuiService = game:GetService("GuiService")
 local SoundService = game:GetService("SoundService")
-local HttpService = game:GetService("HttpService")
+local HttpService = game:GetService("HttpService") -- For potential future use with external data/APIs
+local DataStoreService = game:GetService("DataStoreService") -- For saving settings
 
 -- ═══════════════════════════════════════════════════════════════
--- CONFIGURATION SYSTEM
+-- CONFIGURATION SYSTEM (ENHANCED)
 -- ═══════════════════════════════════════════════════════════════
 
 local CONFIG = {
@@ -18,66 +17,68 @@ local CONFIG = {
         MAIN_SIZE = Vector2.new(700, 450),
         SIDEBAR_WIDTH = 200,
         CORNER_RADIUS = 15,
-        ANIMATION_SPEED = 0.5,
-        SHADOW_SIZE = 12,
-        TOGGLE_SIZE = 60
+        ANIMATION_SPEED = 0.4, -- Slightly faster animation
+        TOGGLE_SIZE = 60,
+        FONT = Enum.Font.GothamSemibold, -- A clean, modern font
+        FONT_BOLD = Enum.Font.GothamBold,
+        FONT_CUSTOM_ID = "rbxassetid://6063708899", -- Example: A custom font asset ID (replace with actual if found)
+        FONT_ICONS_ID = "rbxassetid://0000000000" -- Placeholder for a potential icon font asset ID
     },
     
     COLORS = {
-        -- Main colors matching NatHub
         BACKGROUND = Color3.fromRGB(32, 34, 37),
-        SIDEBAR = Color3.fromRGB(47, 49, 54),
+        SIDEBAR = Color3.fromRGB(40, 42, 47), -- Slightly adjusted for better contrast
         ACCENT = Color3.fromRGB(114, 137, 218),
         ACCENT_HOVER = Color3.fromRGB(129, 151, 230),
-        
-        -- Status colors
         SUCCESS = Color3.fromRGB(67, 181, 129),
         WARNING = Color3.fromRGB(250, 166, 26),
         DANGER = Color3.fromRGB(240, 71, 71),
         INFO = Color3.fromRGB(52, 152, 219),
-        
-        -- Text colors
-        TEXT_PRIMARY = Color3.fromRGB(220, 221, 222),
+        TEXT_PRIMARY = Color3.fromRGB(240, 241, 242), -- Brighter text
         TEXT_SECONDARY = Color3.fromRGB(185, 187, 190),
         TEXT_MUTED = Color3.fromRGB(114, 118, 125),
-        
-        -- UI colors
         BORDER = Color3.fromRGB(64, 68, 75),
         HOVER = Color3.fromRGB(54, 57, 63),
-        SELECTED = Color3.fromRGB(64, 68, 75),
-        
-        -- Gradient colors
-        GRADIENT_START = Color3.fromRGB(88, 101, 242),
-        GRADIENT_END = Color3.fromRGB(139, 69, 255)
-    },
-    
-    SOUNDS = {
-        ENABLED = true,
-        CLICK = "rbxasset://sounds/electronicpingshort.wav",
-        HOVER = "rbxasset://sounds/switch.wav",
-        SLIDE = "rbxasset://sounds/impact_generic.mp3",
-        OPEN = "rbxasset://sounds/bamf.mp3",
-        CLOSE = "rbxasset://sounds/whoosh.wav",
-        SUCCESS = "rbxasset://sounds/victory.wav"
+        SELECTED = Color3.fromRGB(64, 68, 75)
     },
     
     SPEED = {
         MIN = 1,
-        MAX = 100,
+        MAX = 250, -- Increased max speed
         DEFAULT = 16,
-        PRECISION = 1
+        PRESETS = {50, 100, 150, 200}
     },
     
-    -- Professional SVG-style icons (using ImageLabel with custom images)
-    ICONS = {
-        SPEED = "rbxasset://textures/ui/GuiImagePlaceholder.png",
-        JUMP = "rbxasset://textures/ui/GuiImagePlaceholder.png", 
-        SETTINGS = "rbxasset://textures/ui/GuiImagePlaceholder.png",
-        INFO = "rbxasset://textures/ui/GuiImagePlaceholder.png",
-        CLOSE = "rbxasset://textures/ui/GuiImagePlaceholder.png",
-        MENU = "rbxasset://textures/ui/GuiImagePlaceholder.png",
-        SOUND_ON = "rbxasset://textures/ui/GuiImagePlaceholder.png",
-        SOUND_OFF = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+    JUMP = {
+        POWER_MIN = 0,
+        POWER_MAX = 200,
+        POWER_DEFAULT = 50,
+        HEIGHT_MIN = 0,
+        HEIGHT_MAX = 200,
+        HEIGHT_DEFAULT = 7.2,
+        HIP_HEIGHT_MIN = 0,
+        HIP_HEIGHT_MAX = 5,
+        HIP_HEIGHT_DEFAULT = 0.5 -- Default for R6/R15 is usually around 0.5-0.6
+    },
+    
+    ICONS = { -- Using Image IDs for better visual quality and potential SVG conversion
+        SPEED = "rbxassetid://5009915812", -- Placeholder, replace with actual Image ID
+        JUMP = "rbxassetid://9180622670", -- Placeholder
+        SETTINGS = "rbxassetid://11818627075", -- Placeholder
+        INFO = "rbxassetid://10590477450", -- Placeholder
+        CLOSE = "rbxassetid://8425069728", -- Placeholder
+        MENU = "rbxassetid://9142678957", -- Placeholder
+        CHECK = "rbxassetid://1234567896", -- Placeholder for toggle on
+        UNCHECK = "rbxassetid://1234567897" -- Placeholder for toggle off
+    },
+
+    SOUNDS = { -- Using common, free-to-use sound assets
+        CLICK = "rbxassetid://913363246", -- UI Click
+        HOVER = "rbxassetid://6421943844", -- UI Hover
+        OPEN = "rbxassetid://130992943", -- Swoosh
+        CLOSE = "rbxassetid://130992919", -- Swoosh reverse
+        TOGGLE_ON = "rbxassetid://130992943", -- Example, same as open
+        TOGGLE_OFF = "rbxassetid://130992919" -- Example, same as close
     }
 }
 
@@ -87,97 +88,60 @@ local CONFIG = {
 
 local Utils = {}
 
-function Utils.createSound(soundId, volume, pitch)
-    local sound = Instance.new("Sound")
-    sound.SoundId = soundId
-    sound.Volume = volume or 0.4
-    sound.Pitch = pitch or 1
-    sound.Parent = SoundService
-    return sound
-end
-
 function Utils.createTween(instance, tweenInfo, properties, callback)
+    if not instance or not pcall(function() return instance.Parent end) then return end
     local tween = TweenService:Create(instance, tweenInfo, properties)
     if callback then
-        tween.Completed:Once(callback)
+        local connection
+        connection = tween.Completed:Connect(function(state)
+            pcall(callback, state)
+            if connection then connection:Disconnect() end
+        end)
     end
     tween:Play()
     return tween
 end
 
 function Utils.applyCorners(instance, radius)
-    local corner = Instance.new("UICorner")
+    if not instance then return end
+    local corner = instance:FindFirstChildOfClass("UICorner") or Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, radius or CONFIG.UI.CORNER_RADIUS)
     corner.Parent = instance
     return corner
 end
 
-function Utils.createGradient(instance, colorSequence, rotation)
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = colorSequence
+function Utils.createGradient(instance, colors, rotation)
+    if not instance then return end
+    local gradient = instance:FindFirstChildOfClass("UIGradient") or Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new(colors)
     gradient.Rotation = rotation or 0
     gradient.Parent = instance
     return gradient
 end
 
-function Utils.createShadow(instance, size, transparency)
-    local shadow = Instance.new("ImageLabel")
-    shadow.Name = "DropShadow"
-    shadow.Size = UDim2.new(1, size * 2, 1, size * 2)
-    shadow.Position = UDim2.new(0, -size, 0, -size)
-    shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-    shadow.ImageColor3 = Color3.new(0, 0, 0)
-    shadow.ImageTransparency = transparency or 0.7
-    shadow.ZIndex = instance.ZIndex - 1
-    shadow.Parent = instance.Parent
-    
-    Utils.applyCorners(shadow, CONFIG.UI.CORNER_RADIUS + 3)
-    return shadow
-end
-
-function Utils.createIcon(parent, iconType, size, position, color)
-    local iconFrame = Instance.new("Frame")
-    iconFrame.Name = iconType .. "Icon"
-    iconFrame.Size = size
-    iconFrame.Position = position
-    iconFrame.BackgroundTransparency = 1
-    iconFrame.Parent = parent
-    
-    local icon = Instance.new("ImageLabel")
-    icon.Name = "Icon"
-    icon.Size = UDim2.new(0.8, 0, 0.8, 0)
-    icon.Position = UDim2.new(0.1, 0, 0.1, 0)
-    icon.BackgroundTransparency = 1
-    icon.Image = CONFIG.ICONS[iconType:upper()] or CONFIG.ICONS.MENU
-    icon.ImageColor3 = color or CONFIG.COLORS.TEXT_SECONDARY
-    icon.ScaleType = Enum.ScaleType.Fit
-    icon.Parent = iconFrame
-    
-    return iconFrame, icon
-end
-
-function Utils.addDivider(parent, position)
-    local divider = Instance.new("Frame")
-    divider.Name = "Divider"
-    divider.Size = UDim2.new(1, -40, 0, 1)
-    divider.Position = position
-    divider.BackgroundColor3 = CONFIG.COLORS.BORDER
-    divider.BorderSizePixel = 0
-    divider.Parent = parent
-    
-    return divider
-end
-
-function Utils.formatNumber(number, decimals)
-    local multiplier = 10 ^ (decimals or 0)
-    return math.floor(number * multiplier) / multiplier
-end
-
 function Utils.validateNumber(value, min, max, default)
     local num = tonumber(value)
-    if not num then return default end
-    return math.clamp(num, min or -math.huge, max or math.huge)
+    if not num or num ~= num then return default end -- Check for NaN
+    return math.clamp(num, min, max)
+end
+
+function Utils.createSound(soundId, volume)
+    local sound = Instance.new("Sound")
+    sound.SoundId = soundId
+    sound.Volume = volume or 0.5
+    sound.Parent = SoundService
+    return sound
+end
+
+function Utils.createIcon(parent, iconId, size, position, color)
+    local icon = Instance.new("ImageLabel")
+    icon.Image = iconId
+    icon.BackgroundTransparency = 1
+    icon.Size = UDim2.new(0, size, 0, size)
+    icon.Position = UDim2.new(0, position.X, 0, position.Y)
+    icon.ImageColor3 = color or CONFIG.COLORS.TEXT_PRIMARY
+    icon.Parent = parent
+    return icon
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -194,79 +158,79 @@ function NatHubController.new()
     self.player = Players.LocalPlayer
     self.playerGui = self.player:WaitForChild("PlayerGui")
     self.currentSpeed = CONFIG.SPEED.DEFAULT
-    self.currentJumpPower = 50
-    self.currentJumpHeight = 7.2
+    self.currentJumpPower = CONFIG.JUMP.POWER_DEFAULT
+    self.currentJumpHeight = CONFIG.JUMP.HEIGHT_DEFAULT
+    self.currentHipHeight = CONFIG.JUMP.HIP_HEIGHT_DEFAULT -- Default value, will be updated from Humanoid
     self.isVisible = false
     self.currentPage = "Speed"
     self.isDragging = false
+    self.dragOffset = Vector2.new(0,0)
     
-    -- Component Storage
+    -- Storage
     self.components = {}
     self.connections = {}
     self.tweens = {}
     self.pages = {}
     
-    -- Settings System
+    -- Settings (Loaded from DataStore)
     self.settings = {
         soundEnabled = true,
         autoApply = true,
         saveSettings = true,
         animations = true,
-        theme = "dark"
+        keybind = Enum.KeyCode.RightControl -- Default keybind
     }
     
-    -- Sound System
-    self.sounds = {}
-    self:initSounds()
+    -- Sounds
+    self.sounds = {
+        click = Utils.createSound(CONFIG.SOUNDS.CLICK, 0.7),
+        hover = Utils.createSound(CONFIG.SOUNDS.HOVER, 0.2),
+        open = Utils.createSound(CONFIG.SOUNDS.OPEN, 0.6),
+        close = Utils.createSound(CONFIG.SOUNDS.CLOSE, 0.6),
+        toggleOn = Utils.createSound(CONFIG.SOUNDS.TOGGLE_ON, 0.5),
+        toggleOff = Utils.createSound(CONFIG.SOUNDS.TOGGLE_OFF, 0.5)
+    }
     
-    -- Performance Statistics
+    -- Stats
     self.stats = {
         frameCount = 0,
         lastFPSUpdate = tick(),
         speedChanges = 0,
+        jumpChanges = 0,
         sessionStart = tick(),
-        currentFPS = 60,
-        ping = 0,
-        memory = 0
+        currentFPS = 60
     }
     
-    -- Initialize UI
-    self:initialize()
+    -- Initialize
+    self:init()
     
     return self
 end
 
-function NatHubController:initialize()
+function NatHubController:init()
     -- Clean existing UI
     local existing = self.playerGui:FindFirstChild("NatHubCharacterUI")
-    if existing then existing:Destroy() end
+    if existing then 
+        existing:Destroy() 
+        task.wait(0.1)
+    end
     
-    -- Create main components
+    -- Load settings
+    self:loadSettings()
+
+    -- Create UI
     self:createMainUI()
     self:createToggleButton()
-    self:setupEventHandlers()
+    self:setupEvents()
     self:setupCharacterHandling()
     self:startUpdateLoop()
     
-    -- Load saved settings
-    self:loadSettings()
-    
-    print("🚀 NatHub Character Controller v3.0 Loaded!")
-    print("📋 Press the toggle button to open the interface")
-end
-
-function NatHubController:initSounds()
-    if CONFIG.SOUNDS.ENABLED then
-        for name, soundId in pairs(CONFIG.SOUNDS) do
-            if name ~= "ENABLED" then
-                self.sounds[name:lower()] = Utils.createSound(soundId, 0.3)
-            end
-        end
-    end
+    print("✅ NatHub Character Controller Loaded! (Enhanced by Manus)")
+    print("🎮 Press " .. self.settings.keybind.Name .. " to open/close the menu.")
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- UI CREATION METHODS
+-- UI CREATION
 -- ═══════════════════════════════════════════════════════════════
 
 function NatHubController:createMainUI()
@@ -274,108 +238,93 @@ function NatHubController:createMainUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "NatHubCharacterUI"
     screenGui.Parent = self.playerGui
-    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screenGui.ResetOnSpawn = false
-    screenGui.IgnoreGuiInset = false
-    screenGui.DisplayOrder = 999
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.DisplayOrder = 100
     
-    -- Main Container Frame
+    -- Main Frame
     local mainFrame = Instance.new("Frame")
-    mainFrame.Name = "MainFrame" 
+    mainFrame.Name = "MainFrame"
     mainFrame.Size = UDim2.new(0, CONFIG.UI.MAIN_SIZE.X, 0, CONFIG.UI.MAIN_SIZE.Y)
-    mainFrame.Position = UDim2.new(0.5, -CONFIG.UI.MAIN_SIZE.X/2, -1, -50) -- Start off-screen
+    mainFrame.Position = UDim2.new(0.5, -CONFIG.UI.MAIN_SIZE.X/2, -1, 0) -- Start off-screen
     mainFrame.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
     mainFrame.BorderSizePixel = 0
     mainFrame.Active = true
-    mainFrame.Draggable = false -- We'll handle dragging manually
+    mainFrame.Draggable = false -- Custom draggable implementation
     mainFrame.Parent = screenGui
     
     Utils.applyCorners(mainFrame, CONFIG.UI.CORNER_RADIUS)
-    Utils.createShadow(mainFrame, CONFIG.UI.SHADOW_SIZE, 0.5)
     
-    -- Animated border effect
-    local borderStroke = Instance.new("UIStroke")
-    borderStroke.Color = CONFIG.COLORS.GRADIENT_START
-    borderStroke.Thickness = 2
-    borderStroke.Transparency = 0.2
-    borderStroke.Parent = mainFrame
-    
-    -- Border animation
-    local borderTween = TweenService:Create(borderStroke,
-        TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-        {Color = CONFIG.COLORS.GRADIENT_END}
-    )
-    borderTween:Play()
-    table.insert(self.tweens, borderTween)
+    -- Border
+    local border = Instance.new("UIStroke")
+    border.Color = CONFIG.COLORS.ACCENT
+    border.Thickness = 2
+    border.Transparency = 0.3
+    border.Parent = mainFrame
     
     -- Background gradient
-    Utils.createGradient(mainFrame, ColorSequence.new({
+    Utils.createGradient(mainFrame, {
         ColorSequenceKeypoint.new(0, CONFIG.COLORS.BACKGROUND),
         ColorSequenceKeypoint.new(1, CONFIG.COLORS.BACKGROUND:lerp(Color3.new(0, 0, 0), 0.3))
-    }), 135)
+    }, 135)
     
-    -- Create UI sections
+    -- Create sections
     self:createTopBar(mainFrame)
     self:createSidebar(mainFrame)
     self:createContentArea(mainFrame)
     
-    -- Store main references
+    -- Store references
     self.components.screenGui = screenGui
     self.components.mainFrame = mainFrame
     
-    -- Setup dragging system
+    -- Make draggable
     self:makeDraggable(mainFrame)
 end
 
 function NatHubController:createToggleButton()
-    local toggleButton = Instance.new("TextButton")
+    local toggleButton = Instance.new("ImageButton") -- Changed to ImageButton for icon support
     toggleButton.Name = "ToggleButton"
     toggleButton.Size = UDim2.new(0, CONFIG.UI.TOGGLE_SIZE, 0, CONFIG.UI.TOGGLE_SIZE)
     toggleButton.Position = UDim2.new(0, 30, 0, 120)
     toggleButton.BackgroundColor3 = CONFIG.COLORS.ACCENT
-    toggleButton.Text = ""
+    toggleButton.Image = CONFIG.ICONS.MENU -- Use Image ID for the icon
+    toggleButton.ImageColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    toggleButton.BackgroundTransparency = 0
     toggleButton.BorderSizePixel = 0
     toggleButton.ZIndex = 1000
     toggleButton.Parent = self.components.screenGui
     
     Utils.applyCorners(toggleButton, CONFIG.UI.TOGGLE_SIZE/2)
-    Utils.createShadow(toggleButton, 6, 0.6)
     
-    -- Toggle button gradient
-    Utils.createGradient(toggleButton, ColorSequence.new({
-        ColorSequenceKeypoint.new(0, CONFIG.COLORS.GRADIENT_START),
-        ColorSequenceKeypoint.new(1, CONFIG.COLORS.GRADIENT_END)
-    }), 45)
+    -- Gradient
+    Utils.createGradient(toggleButton, {
+        ColorSequenceKeypoint.new(0, CONFIG.COLORS.ACCENT),
+        ColorSequenceKeypoint.new(1, CONFIG.COLORS.ACCENT:lerp(Color3.new(0, 0, 0), 0.2))
+    }, 45)
     
-    -- Add icon to toggle button
-    local iconFrame, icon = Utils.createIcon(toggleButton, "MENU", 
-        UDim2.new(0.6, 0, 0.6, 0), UDim2.new(0.2, 0, 0.2, 0), CONFIG.COLORS.TEXT_PRIMARY)
-    
-    -- Pulsing animation
-    local pulseInfo = TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-    local pulseTween = TweenService:Create(toggleButton, pulseInfo, {
-        Size = UDim2.new(0, CONFIG.UI.TOGGLE_SIZE + 8, 0, CONFIG.UI.TOGGLE_SIZE + 8)
-    })
-    pulseTween:Play()
-    table.insert(self.tweens, pulseTween)
-    
-    -- Event handlers
-    toggleButton.MouseButton1Click:Connect(function()
+    -- Events
+    self.connections.toggleButton_Click = toggleButton.MouseButton1Click:Connect(function()
         self:toggleUI()
         self:playSound("click")
     end)
     
-    toggleButton.MouseEnter:Connect(function()
+    self.connections.toggleButton_MouseEnter = toggleButton.MouseEnter:Connect(function()
         self:playSound("hover")
-        Utils.createTween(toggleButton, TweenInfo.new(0.2), {
-            Size = UDim2.new(0, CONFIG.UI.TOGGLE_SIZE + 10, 0, CONFIG.UI.TOGGLE_SIZE + 10)
-        })
+        if self.settings.animations then
+            Utils.createTween(toggleButton, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, CONFIG.UI.TOGGLE_SIZE + 10, 0, CONFIG.UI.TOGGLE_SIZE + 10),
+                BackgroundColor3 = CONFIG.COLORS.ACCENT_HOVER
+            })
+        end
     end)
     
-    toggleButton.MouseLeave:Connect(function()
-        Utils.createTween(toggleButton, TweenInfo.new(0.2), {
-            Size = UDim2.new(0, CONFIG.UI.TOGGLE_SIZE, 0, CONFIG.UI.TOGGLE_SIZE)
-        })
+    self.connections.toggleButton_MouseLeave = toggleButton.MouseLeave:Connect(function()
+        if self.settings.animations then
+            Utils.createTween(toggleButton, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, CONFIG.UI.TOGGLE_SIZE, 0, CONFIG.UI.TOGGLE_SIZE),
+                BackgroundColor3 = CONFIG.COLORS.ACCENT
+            })
+        end
     end)
     
     self.components.toggleButton = toggleButton
@@ -392,85 +341,85 @@ function NatHubController:createTopBar(parent)
     
     Utils.applyCorners(topBar, CONFIG.UI.CORNER_RADIUS)
     
-    -- Top bar gradient
-    Utils.createGradient(topBar, ColorSequence.new({
-        ColorSequenceKeypoint.new(0, CONFIG.COLORS.SIDEBAR),
-        ColorSequenceKeypoint.new(1, CONFIG.COLORS.SIDEBAR:lerp(CONFIG.COLORS.ACCENT, 0.1))
-    }), 90)
+    -- Title
+    local titleFrame = Instance.new("Frame")
+    titleFrame.Name = "TitleFrame"
+    titleFrame.Size = UDim2.new(0, 400, 0, 40)
+    titleFrame.Position = UDim2.new(0, 20, 0, 10)
+    titleFrame.BackgroundTransparency = 1
+    titleFrame.Parent = topBar
+
+    local titleIcon = Utils.createIcon(titleFrame, CONFIG.ICONS.SPEED, 30, Vector2.new(0, 5), CONFIG.COLORS.TEXT_PRIMARY)
+    titleIcon.Name = "TitleIcon"
+
+    local titleText = Instance.new("TextLabel")
+    titleText.Name = "TitleText"
+    titleText.Size = UDim2.new(1, -40, 1, 0)
+    titleText.Position = UDim2.new(0, 40, 0, 0)
+    titleText.BackgroundTransparency = 1
+    titleText.Text = "NatHub Character Controller"
+    titleText.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    titleText.TextSize = 20
+    titleText.Font = CONFIG.UI.FONT_BOLD
+    titleText.TextXAlignment = Enum.TextXAlignment.Left
+    titleText.Parent = titleFrame
     
-    -- Main title with icon
-    local titleIcon, titleIconImage = Utils.createIcon(topBar, "SPEED", 
-        UDim2.new(0, 40, 0, 40), UDim2.new(0, 15, 0, 10), CONFIG.COLORS.ACCENT)
+    -- Version
+    local version = Instance.new("Frame")
+    version.Size = UDim2.new(0, 50, 0, 25)
+    version.Position = UDim2.new(0, 420, 0, 17.5)
+    version.BackgroundColor3 = CONFIG.COLORS.SUCCESS
+    version.BorderSizePixel = 0
+    version.Parent = topBar
     
-    local title = Instance.new("TextLabel")
-    title.Name = "Title"
-    title.Size = UDim2.new(0, 350, 0, 40)
-    title.Position = UDim2.new(0, 65, 0, 10)
-    title.BackgroundTransparency = 1
-    title.Text = "NatHub Character Controller"
-    title.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    title.TextSize = 20
-    title.Font = Enum.Font.GothamBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = topBar
-    
-    -- Version badge
-    local versionBadge = Instance.new("Frame")
-    versionBadge.Name = "VersionBadge"
-    versionBadge.Size = UDim2.new(0, 50, 0, 25)
-    versionBadge.Position = UDim2.new(0, 420, 0, 17.5)
-    versionBadge.BackgroundColor3 = CONFIG.COLORS.SUCCESS
-    versionBadge.BorderSizePixel = 0
-    versionBadge.Parent = topBar
-    
-    Utils.applyCorners(versionBadge, 12)
+    Utils.applyCorners(version, 12)
     
     local versionText = Instance.new("TextLabel")
     versionText.Size = UDim2.new(1, 0, 1, 0)
     versionText.BackgroundTransparency = 1
-    versionText.Text = "v3.0"
+    versionText.Text = "v3.1"
     versionText.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
     versionText.TextSize = 12
-    versionText.Font = Enum.Font.GothamBold
-    versionText.Parent = versionBadge
+    versionText.Font = CONFIG.UI.FONT_BOLD
+    versionText.Parent = version
     
     -- Close button
-    local closeBtn = Instance.new("TextButton")
+    local closeBtn = Instance.new("ImageButton") -- Changed to ImageButton for icon support
     closeBtn.Name = "CloseButton"
     closeBtn.Size = UDim2.new(0, 40, 0, 40)
     closeBtn.Position = UDim2.new(1, -50, 0, 10)
     closeBtn.BackgroundColor3 = CONFIG.COLORS.DANGER
-    closeBtn.Text = ""
+    closeBtn.Image = CONFIG.ICONS.CLOSE -- Use Image ID for the icon
+    closeBtn.ImageColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    closeBtn.BackgroundTransparency = 0
     closeBtn.BorderSizePixel = 0
     closeBtn.Parent = topBar
     
     Utils.applyCorners(closeBtn, 10)
     
-    -- Close icon
-    local closeIcon, closeIconImage = Utils.createIcon(closeBtn, "CLOSE",
-        UDim2.new(0.6, 0, 0.6, 0), UDim2.new(0.2, 0, 0.2, 0), CONFIG.COLORS.TEXT_PRIMARY)
-    
-    -- Close button events
-    closeBtn.MouseButton1Click:Connect(function()
+    self.connections.closeBtn_Click = closeBtn.MouseButton1Click:Connect(function()
         self:hideUI()
         self:playSound("close")
     end)
     
-    closeBtn.MouseEnter:Connect(function()
-        Utils.createTween(closeBtn, TweenInfo.new(0.2), {
-            BackgroundColor3 = CONFIG.COLORS.DANGER:lerp(Color3.new(1, 1, 1), 0.2)
-        })
+    self.connections.closeBtn_MouseEnter = closeBtn.MouseEnter:Connect(function()
+        if self.settings.animations then
+            Utils.createTween(closeBtn, TweenInfo.new(0.2), {
+                BackgroundColor3 = CONFIG.COLORS.DANGER:lerp(Color3.new(1, 1, 1), 0.2)
+            })
+        end
     end)
     
-    closeBtn.MouseLeave:Connect(function()
-        Utils.createTween(closeBtn, TweenInfo.new(0.2), {
-            BackgroundColor3 = CONFIG.COLORS.DANGER
-        })
+    self.connections.closeBtn_MouseLeave = closeBtn.MouseLeave:Connect(function()
+        if self.settings.animations then
+            Utils.createTween(closeBtn, TweenInfo.new(0.2), {
+                BackgroundColor3 = CONFIG.COLORS.DANGER
+            })
+        end
     end)
     
     self.components.topBar = topBar
     self.components.closeBtn = closeBtn
-    self.components.title = title
 end
 
 function NatHubController:createSidebar(parent)
@@ -484,39 +433,37 @@ function NatHubController:createSidebar(parent)
     
     Utils.applyCorners(sidebar, CONFIG.UI.CORNER_RADIUS)
     
-    -- Sidebar gradient
-    Utils.createGradient(sidebar, ColorSequence.new({
-        ColorSequenceKeypoint.new(0, CONFIG.COLORS.SIDEBAR),
-        ColorSequenceKeypoint.new(1, CONFIG.COLORS.SIDEBAR:lerp(Color3.new(0, 0, 0), 0.4))
-    }), 180)
-    
-    -- Menu items configuration
+    -- Menu items
     local menuItems = {
-        {name = "Speed Control", icon = "SPEED", page = "Speed"},
-        {name = "Jump Settings", icon = "JUMP", page = "Jump"}, 
-        {name = "Information", icon = "INFO", page = "Info"},
-        {name = "Settings", icon = "SETTINGS", page = "Settings"}
+        {name = "Speed Control", icon = CONFIG.ICONS.SPEED, page = "Speed"},
+        {name = "Jump Settings", icon = CONFIG.ICONS.JUMP, page = "Jump"}, 
+        {name = "Information", icon = CONFIG.ICONS.INFO, page = "Info"},
+        {name = "Settings", icon = CONFIG.ICONS.SETTINGS, page = "Settings"}
     }
     
-    -- Create menu items
     for i, item in ipairs(menuItems) do
         self:createMenuItem(sidebar, item, i)
         
-        -- Add divider between items (except last)
+        -- Add divider
         if i < #menuItems then
-            Utils.addDivider(sidebar, UDim2.new(0, 20, 0, 15 + i * 70))
+            local divider = Instance.new("Frame")
+            divider.Size = UDim2.new(1, -40, 0, 1)
+            divider.Position = UDim2.new(0, 20, 0, 15 + i * 70)
+            divider.BackgroundColor3 = CONFIG.COLORS.BORDER
+            divider.BorderSizePixel = 0
+            divider.Parent = sidebar
         end
     end
     
     self.components.sidebar = sidebar
 end
 
-function NatHubController:createMenuItem(parent, item, index) 
+function NatHubController:createMenuItem(parent, item, index)
     local menuItem = Instance.new("TextButton")
     menuItem.Name = item.page .. "Button"
     menuItem.Size = UDim2.new(1, -20, 0, 55)
     menuItem.Position = UDim2.new(0, 10, 0, 15 + (index - 1) * 70)
-    menuItem.BackgroundColor3 = self.currentPage == item.page and CONFIG.COLORS.SELECTED or Color3.fromRGB(0, 0, 0, 0)
+    menuItem.BackgroundColor3 = self.currentPage == item.page and CONFIG.COLORS.SELECTED or Color3.fromRGB(0, 0, 0)
     menuItem.BackgroundTransparency = self.currentPage == item.page and 0 or 1
     menuItem.Text = ""
     menuItem.BorderSizePixel = 0
@@ -536,12 +483,11 @@ function NatHubController:createMenuItem(parent, item, index)
     
     Utils.applyCorners(indicator, 2)
     
-    -- Menu item icon
-    local iconFrame, iconImage = Utils.createIcon(menuItem, item.icon,
-        UDim2.new(0, 35, 0, 35), UDim2.new(0, 15, 0, 10),
-        self.currentPage == item.page and CONFIG.COLORS.ACCENT or CONFIG.COLORS.TEXT_SECONDARY)
+    -- Icon (using ImageLabel for better control over Image ID)
+    local icon = Utils.createIcon(menuItem, item.icon, 35, Vector2.new(15, 10), self.currentPage == item.page and CONFIG.COLORS.ACCENT or CONFIG.COLORS.TEXT_SECONDARY)
+    icon.Name = "Icon"
     
-    -- Menu item text
+    -- Text
     local text = Instance.new("TextLabel")
     text.Name = "MenuText"
     text.Size = UDim2.new(1, -65, 1, 0)
@@ -550,37 +496,40 @@ function NatHubController:createMenuItem(parent, item, index)
     text.Text = item.name
     text.TextColor3 = self.currentPage == item.page and CONFIG.COLORS.TEXT_PRIMARY or CONFIG.COLORS.TEXT_SECONDARY
     text.TextSize = 16
-    text.Font = Enum.Font.Gotham
+    text.Font = CONFIG.UI.FONT -- Use the configured font
     text.TextXAlignment = Enum.TextXAlignment.Left
     text.Parent = menuItem
     
-    -- Click handler
-    menuItem.MouseButton1Click:Connect(function()
+    -- Events
+    self.connections["menuItem_Click_" .. item.page] = menuItem.MouseButton1Click:Connect(function()
         self:switchPage(item.page)
         self:playSound("click")
     end)
     
-    -- Hover effects
-    menuItem.MouseEnter:Connect(function()
+    self.connections["menuItem_MouseEnter_" .. item.page] = menuItem.MouseEnter:Connect(function()
         if self.currentPage ~= item.page then
             self:playSound("hover")
-            Utils.createTween(menuItem, TweenInfo.new(0.3), {BackgroundTransparency = 0.7})
-            Utils.createTween(iconImage, TweenInfo.new(0.3), {ImageColor3 = CONFIG.COLORS.TEXT_PRIMARY})
-            Utils.createTween(text, TweenInfo.new(0.3), {TextColor3 = CONFIG.COLORS.TEXT_PRIMARY})
+            if self.settings.animations then
+                Utils.createTween(menuItem, TweenInfo.new(0.3), {BackgroundTransparency = 0.7})
+                Utils.createTween(icon, TweenInfo.new(0.3), {ImageColor3 = CONFIG.COLORS.TEXT_PRIMARY})
+                Utils.createTween(text, TweenInfo.new(0.3), {TextColor3 = CONFIG.COLORS.TEXT_PRIMARY})
+            end
         end
     end)
     
-    menuItem.MouseLeave:Connect(function()
+    self.connections["menuItem_MouseLeave_" .. item.page] = menuItem.MouseLeave:Connect(function()
         if self.currentPage ~= item.page then
-            Utils.createTween(menuItem, TweenInfo.new(0.3), {BackgroundTransparency = 1})
-            Utils.createTween(iconImage, TweenInfo.new(0.3), {ImageColor3 = CONFIG.COLORS.TEXT_SECONDARY})
-            Utils.createTween(text, TweenInfo.new(0.3), {TextColor3 = CONFIG.COLORS.TEXT_SECONDARY})
+            if self.settings.animations then
+                Utils.createTween(menuItem, TweenInfo.new(0.3), {BackgroundTransparency = 1})
+                Utils.createTween(icon, TweenInfo.new(0.3), {ImageColor3 = CONFIG.COLORS.TEXT_SECONDARY})
+                Utils.createTween(text, TweenInfo.new(0.3), {TextColor3 = CONFIG.COLORS.TEXT_SECONDARY})
+            end
         end
     end)
     
     -- Store references
     self.components[item.page .. "MenuItem"] = menuItem
-    self.components[item.page .. "Icon"] = iconImage
+    self.components[item.page .. "Icon"] = icon
     self.components[item.page .. "Text"] = text  
     self.components[item.page .. "Indicator"] = indicator
 end
@@ -595,1248 +544,839 @@ function NatHubController:createContentArea(parent)
     contentArea.ScrollBarThickness = 8
     contentArea.ScrollBarImageColor3 = CONFIG.COLORS.ACCENT
     contentArea.ScrollBarImageTransparency = 0.3
-    contentArea.CanvasSize = UDim2.new(0, 0, 0, 800)
+    contentArea.CanvasSize = UDim2.new(0, 0, 0, 1000) -- Will be adjusted dynamically
     contentArea.ScrollingDirection = Enum.ScrollingDirection.Y
     contentArea.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
     contentArea.Parent = parent
     
-    -- Create all page content
+    -- Create pages
     self:createSpeedPage(contentArea)
-    self:createJumpPage(contentArea)  
+    self:createJumpPage(contentArea)
     self:createInfoPage(contentArea)
     self:createSettingsPage(contentArea)
-    
+
     self.components.contentArea = contentArea
+    self:switchPage(self.currentPage) -- Initialize with the default page
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- PAGE CREATION METHODS
+-- PAGE SPECIFIC UI CREATION
 -- ═══════════════════════════════════════════════════════════════
 
+function NatHubController:createPageFrame(parent, pageName)
+    local pageFrame = Instance.new("Frame")
+    pageFrame.Name = pageName .. "Page"
+    pageFrame.Size = UDim2.new(1, 0, 1, 0)
+    pageFrame.Position = UDim2.new(0, 0, 0, 0)
+    pageFrame.BackgroundTransparency = 1
+    pageFrame.BorderSizePixel = 0
+    pageFrame.Visible = false -- Hidden by default
+    pageFrame.Parent = parent
+    self.pages[pageName] = pageFrame
+    return pageFrame
+end
+
 function NatHubController:createSpeedPage(parent)
-    local speedPage = Instance.new("Frame")
-    speedPage.Name = "SpeedPage"
-    speedPage.Size = UDim2.new(1, 0, 0, 800)
-    speedPage.Position = UDim2.new(0, 0, 0, 0)
-    speedPage.BackgroundTransparency = 1
-    speedPage.Visible = true
-    speedPage.Parent = parent
-    
-    -- Current Speed Display Card
-    local speedCard = self:createCard(speedPage, "Current Speed: " .. self.currentSpeed, UDim2.new(1, 0, 0, 80), UDim2.new(0, 0, 0, 0))
-    
-    local speedValue = Instance.new("TextLabel")
-    speedValue.Name = "SpeedValue"
-    speedValue.Size = UDim2.new(1, -40, 0, 50)
-    speedValue.Position = UDim2.new(0, 20, 0, 20)
-    speedValue.BackgroundTransparency = 1
-    speedValue.Text = tostring(self.currentSpeed)
-    speedValue.TextColor3 = CONFIG.COLORS.ACCENT
-    speedValue.TextSize = 36
-    speedValue.Font = Enum.Font.GothamBold
-    speedValue.Parent = speedCard
-    
-    -- Speed Slider Card
-    local sliderCard = self:createCard(speedPage, "Speed Slider", UDim2.new(1, 0, 0, 120), UDim2.new(0, 0, 0, 90))
-    self:createAdvancedSlider(sliderCard)
-    
-    -- Manual Input Card
-    local inputCard = self:createCard(speedPage, "Manual Input", UDim2.new(1, 0, 0, 80), UDim2.new(0, 0, 0, 220))
-    self:createSpeedInput(inputCard)
-    
-    -- Speed Presets Card
-    local presetsCard = self:createCard(speedPage, "Speed Presets", UDim2.new(1, 0, 0, 140), UDim2.new(0, 0, 0, 310))
-    self:createSpeedPresets(presetsCard)
-    
-    self.pages.Speed = speedPage
-    self.components.speedValue = speedValue
+    local page = self:createPageFrame(parent, "Speed")
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Vertical
+    layout.Padding = UDim.new(0, 20)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.Parent = page
+
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.BackgroundTransparency = 1
+    title.Text = "Speed Control"
+    title.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    title.TextSize = 24
+    title.Font = CONFIG.UI.FONT_BOLD
+    title.Parent = page
+
+    -- Current Speed Display
+    local currentSpeedDisplay = Instance.new("TextLabel")
+    currentSpeedDisplay.Name = "CurrentSpeedDisplay"
+    currentSpeedDisplay.Size = UDim2.new(1, 0, 0, 30)
+    currentSpeedDisplay.BackgroundTransparency = 1
+    currentSpeedDisplay.Text = "Current Speed: " .. self.currentSpeed
+    currentSpeedDisplay.TextColor3 = CONFIG.COLORS.ACCENT
+    currentSpeedDisplay.TextSize = 20
+    currentSpeedDisplay.Font = CONFIG.UI.FONT
+    currentSpeedDisplay.Parent = page
+    self.components.currentSpeedDisplay = currentSpeedDisplay
+
+    -- Speed Slider
+    self:createAdvancedSlider(page, "WalkSpeed", CONFIG.SPEED.MIN, CONFIG.SPEED.MAX, self.currentSpeed, function(value)
+        self.currentSpeed = value
+        currentSpeedDisplay.Text = "Current Speed: " .. math.floor(value)
+        if self.settings.autoApply then
+            self:applySpeed(value)
+        end
+    end)
+
+    -- Speed Input
+    self:createSpeedInput(page, function(value)
+        self.currentSpeed = value
+        currentSpeedDisplay.Text = "Current Speed: " .. math.floor(value)
+        self:applySpeed(value)
+    end)
+
+    -- Speed Presets
+    self:createSpeedPresets(page, function(value)
+        self.currentSpeed = value
+        currentSpeedDisplay.Text = "Current Speed: " .. math.floor(value)
+        self:applySpeed(value)
+    end)
+
+    -- Apply Button
+    local applyBtn = Instance.new("TextButton")
+    applyBtn.Name = "ApplySpeedButton"
+    applyBtn.Size = UDim2.new(0.8, 0, 0, 45)
+    applyBtn.BackgroundColor3 = CONFIG.COLORS.SUCCESS
+    applyBtn.Text = "Apply Speed"
+    applyBtn.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    applyBtn.TextSize = 18
+    applyBtn.Font = CONFIG.UI.FONT_BOLD
+    applyBtn.BorderSizePixel = 0
+    applyBtn.Parent = page
+    Utils.applyCorners(applyBtn, 10)
+
+    self.connections.applySpeedBtn_Click = applyBtn.MouseButton1Click:Connect(function()
+        self:applySpeed(self.currentSpeed)
+        self:playSound("click")
+        Utils.createTween(applyBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = CONFIG.COLORS.SUCCESS:lerp(Color3.new(1,1,1), 0.3)}, function()
+            Utils.createTween(applyBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = CONFIG.COLORS.SUCCESS})
+        end)
+    end)
+
+    self.connections.applySpeedBtn_MouseEnter = applyBtn.MouseEnter:Connect(function()
+        self:playSound("hover")
+        if self.settings.animations then
+            Utils.createTween(applyBtn, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.SUCCESS:lerp(Color3.new(1,1,1), 0.1)})
+        end
+    end)
+
+    self.connections.applySpeedBtn_MouseLeave = applyBtn.MouseLeave:Connect(function()
+        if self.settings.animations then
+            Utils.createTween(applyBtn, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.SUCCESS})
+        end
+    end)
 end
 
 function NatHubController:createJumpPage(parent)
-    local jumpPage = Instance.new("Frame")
-    jumpPage.Name = "JumpPage"
-    jumpPage.Size = UDim2.new(1, 0, 0, 800)
-    jumpPage.Position = UDim2.new(0, 0, 0, 0)
-    jumpPage.BackgroundTransparency = 1
-    jumpPage.Visible = false
-    jumpPage.Parent = parent
-    
-    -- Jump Power Card
-    local jumpPowerCard = self:createCard(jumpPage, "Jump Power: " .. self.currentJumpPower, UDim2.new(1, 0, 0, 100), UDim2.new(0, 0, 0, 0))
-    self:createJumpPowerControls(jumpPowerCard)
-    
-    -- Jump Height Card
-    local jumpHeightCard = self:createCard(jumpPage, "Jump Height: " .. self.currentJumpHeight, UDim2.new(1, 0, 0, 100), UDim2.new(0, 0, 0, 110))
-    self:createJumpHeightControls(jumpHeightCard)
-    
-    -- Hip Height Card
-    local hipHeightCard = self:createCard(jumpPage, "Hip Height: 0", UDim2.new(1, 0, 0, 100), UDim2.new(0, 0, 0, 220))
-    self:createHipHeightControls(hipHeightCard)
-    
-    self.pages.Jump = jumpPage
+    local page = self:createPageFrame(parent, "Jump")
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Vertical
+    layout.Padding = UDim.new(0, 20)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.Parent = page
+
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.BackgroundTransparency = 1
+    title.Text = "Jump Settings"
+    title.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    title.TextSize = 24
+    title.Font = CONFIG.UI.FONT_BOLD
+    title.Parent = page
+
+    -- Jump Power Display
+    local currentJumpPowerDisplay = Instance.new("TextLabel")
+    currentJumpPowerDisplay.Name = "CurrentJumpPowerDisplay"
+    currentJumpPowerDisplay.Size = UDim2.new(1, 0, 0, 30)
+    currentJumpPowerDisplay.BackgroundTransparency = 1
+    currentJumpPowerDisplay.Text = "Jump Power: " .. self.currentJumpPower
+    currentJumpPowerDisplay.TextColor3 = CONFIG.COLORS.ACCENT
+    currentJumpPowerDisplay.TextSize = 20
+    currentJumpPowerDisplay.Font = CONFIG.UI.FONT
+    currentJumpPowerDisplay.Parent = page
+    self.components.currentJumpPowerDisplay = currentJumpPowerDisplay
+
+    -- Jump Power Slider
+    self:createAdvancedSlider(page, "JumpPower", CONFIG.JUMP.POWER_MIN, CONFIG.JUMP.POWER_MAX, self.currentJumpPower, function(value)
+        self.currentJumpPower = value
+        currentJumpPowerDisplay.Text = "Jump Power: " .. math.floor(value)
+        if self.settings.autoApply then
+            self:applyJumpSettings()
+        end
+    end)
+
+    -- Jump Height Display
+    local currentJumpHeightDisplay = Instance.new("TextLabel")
+    currentJumpHeightDisplay.Name = "CurrentJumpHeightDisplay"
+    currentJumpHeightDisplay.Size = UDim2.new(1, 0, 0, 30)
+    currentJumpHeightDisplay.BackgroundTransparency = 1
+    currentJumpHeightDisplay.Text = "Jump Height: " .. string.format("%.1f", self.currentJumpHeight)
+    currentJumpHeightDisplay.TextColor3 = CONFIG.COLORS.ACCENT
+    currentJumpHeightDisplay.TextSize = 20
+    currentJumpHeightDisplay.Font = CONFIG.UI.FONT
+    currentJumpHeightDisplay.Parent = page
+    self.components.currentJumpHeightDisplay = currentJumpHeightDisplay
+
+    -- Jump Height Slider
+    self:createAdvancedSlider(page, "JumpHeight", CONFIG.JUMP.HEIGHT_MIN, CONFIG.JUMP.HEIGHT_MAX, self.currentJumpHeight, function(value)
+        self.currentJumpHeight = value
+        currentJumpHeightDisplay.Text = "Jump Height: " .. string.format("%.1f", value)
+        if self.settings.autoApply then
+            self:applyJumpSettings()
+        end
+    end)
+
+    -- Hip Height Display
+    local currentHipHeightDisplay = Instance.new("TextLabel")
+    currentHipHeightDisplay.Name = "CurrentHipHeightDisplay"
+    currentHipHeightDisplay.Size = UDim2.new(1, 0, 0, 30)
+    currentHipHeightDisplay.BackgroundTransparency = 1
+    currentHipHeightDisplay.Text = "Hip Height: " .. string.format("%.1f", self.currentHipHeight)
+    currentHipHeightDisplay.TextColor3 = CONFIG.COLORS.ACCENT
+    currentHipHeightDisplay.TextSize = 20
+    currentHipHeightDisplay.Font = CONFIG.UI.FONT
+    currentHipHeightDisplay.Parent = page
+    self.components.currentHipHeightDisplay = currentHipHeightDisplay
+
+    -- Hip Height Slider
+    self:createAdvancedSlider(page, "HipHeight", CONFIG.JUMP.HIP_HEIGHT_MIN, CONFIG.JUMP.HIP_HEIGHT_MAX, self.currentHipHeight, function(value)
+        self.currentHipHeight = value
+        currentHipHeightDisplay.Text = "Hip Height: " .. string.format("%.1f", value)
+        if self.settings.autoApply then
+            self:applyJumpSettings()
+        end
+    end)
+
+    -- Apply Button
+    local applyBtn = Instance.new("TextButton")
+    applyBtn.Name = "ApplyJumpButton"
+    applyBtn.Size = UDim2.new(0.8, 0, 0, 45)
+    applyBtn.BackgroundColor3 = CONFIG.COLORS.SUCCESS
+    applyBtn.Text = "Apply Jump Settings"
+    applyBtn.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    applyBtn.TextSize = 18
+    applyBtn.Font = CONFIG.UI.FONT_BOLD
+    applyBtn.BorderSizePixel = 0
+    applyBtn.Parent = page
+    Utils.applyCorners(applyBtn, 10)
+
+    self.connections.applyJumpBtn_Click = applyBtn.MouseButton1Click:Connect(function()
+        self:applyJumpSettings()
+        self:playSound("click")
+        Utils.createTween(applyBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = CONFIG.COLORS.SUCCESS:lerp(Color3.new(1,1,1), 0.3)}, function()
+            Utils.createTween(applyBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = CONFIG.COLORS.SUCCESS})
+        end)
+    end)
+
+    self.connections.applyJumpBtn_MouseEnter = applyBtn.MouseEnter:Connect(function()
+        self:playSound("hover")
+        if self.settings.animations then
+            Utils.createTween(applyBtn, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.SUCCESS:lerp(Color3.new(1,1,1), 0.1)})
+        end
+    end)
+
+    self.connections.applyJumpBtn_MouseLeave = applyBtn.MouseLeave:Connect(function()
+        if self.settings.animations then
+            Utils.createTween(applyBtn, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.SUCCESS})
+        end
+    end)
 end
 
 function NatHubController:createInfoPage(parent)
-    local infoPage = Instance.new("Frame")
-    infoPage.Name = "InfoPage"
-    infoPage.Size = UDim2.new(1, 0, 0, 800)
-    infoPage.Position = UDim2.new(0, 0, 0, 0)
-    infoPage.BackgroundTransparency = 1
-    infoPage.Visible = false
-    infoPage.Parent = parent
-    
-    -- Player Info Card (No title shown, direct content)
-    local playerCard = self:createCard(infoPage, "", UDim2.new(1, 0, 0, 200), UDim2.new(0, 0, 0, 0))
-    self:createPlayerInfo(playerCard)
-    
-    -- Performance Stats Card
-    local statsCard = self:createCard(infoPage, "Performance Statistics", UDim2.new(1, 0, 0, 180), UDim2.new(0, 0, 0, 210))
-    self:createPerformanceStats(statsCard)
-    
-    -- Session Info Card
-    local sessionCard = self:createCard(infoPage, "Session Information", UDim2.new(1, 0, 0, 120), UDim2.new(0, 0, 0, 400))
-    self:createSessionInfo(sessionCard)
-    
-    self.pages.Info = infoPage
+    local page = self:createPageFrame(parent, "Info")
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Vertical
+    layout.Padding = UDim.new(0, 15)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.Parent = page
+
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.BackgroundTransparency = 1
+    title.Text = "Information & Stats"
+    title.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    title.TextSize = 24
+    title.Font = CONFIG.UI.FONT_BOLD
+    title.Parent = page
+
+    -- Player Info
+    local playerInfoFrame = Instance.new("Frame")
+    playerInfoFrame.Size = UDim2.new(0.9, 0, 0, 100)
+    playerInfoFrame.BackgroundColor3 = CONFIG.COLORS.BACKGROUND:lerp(Color3.new(1,1,1), 0.05)
+    playerInfoFrame.BorderSizePixel = 0
+    playerInfoFrame.Parent = page
+    Utils.applyCorners(playerInfoFrame, 10)
+
+    local playerInfoLayout = Instance.new("UIListLayout")
+    playerInfoLayout.FillDirection = Enum.FillDirection.Vertical
+    playerInfoLayout.Padding = UDim.new(0, 5)
+    playerInfoLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    playerInfoLayout.Parent = playerInfoFrame
+
+    local function createInfoText(parentFrame, textPrefix, initialValue, name)
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Name = name
+        textLabel.Size = UDim2.new(1, -20, 0, 20)
+        textLabel.Position = UDim2.new(0, 10, 0, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = textPrefix .. initialValue
+        textLabel.TextColor3 = CONFIG.COLORS.TEXT_SECONDARY
+        textLabel.TextSize = 16
+        textLabel.Font = CONFIG.UI.FONT
+        textLabel.TextXAlignment = Enum.TextXAlignment.Left
+        textLabel.Parent = parentFrame
+        return textLabel
+    end
+
+    self.components.playerUsername = createInfoText(playerInfoFrame, "Username: ", self.player.Name, "UsernameText")
+    self.components.playerUserId = createInfoText(playerInfoFrame, "User ID: ", self.player.UserId, "UserIdText")
+    self.components.playerMembership = createInfoText(playerInfoFrame, "Membership: ", self.player.MembershipType.Name, "MembershipText")
+
+    -- Performance Stats
+    local perfStatsFrame = Instance.new("Frame")
+    perfStatsFrame.Size = UDim2.new(0.9, 0, 0, 70)
+    perfStatsFrame.BackgroundColor3 = CONFIG.COLORS.BACKGROUND:lerp(Color3.new(1,1,1), 0.05)
+    perfStatsFrame.BorderSizePixel = 0
+    perfStatsFrame.Parent = page
+    Utils.applyCorners(perfStatsFrame, 10)
+
+    local perfStatsLayout = Instance.new("UIListLayout")
+    perfStatsLayout.FillDirection = Enum.FillDirection.Vertical
+    perfStatsLayout.Padding = UDim.new(0, 5)
+    perfStatsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    perfStatsLayout.Parent = perfStatsFrame
+
+    self.components.fpsDisplay = createInfoText(perfStatsFrame, "FPS: ", self.stats.currentFPS, "FPSText")
+    self.components.pingDisplay = createInfoText(perfStatsFrame, "Ping: ", "N/A", "PingText") -- Ping is harder to get accurately client-side
+
+    -- Session Stats
+    local sessionStatsFrame = Instance.new("Frame")
+    sessionStatsFrame.Size = UDim2.new(0.9, 0, 0, 100)
+    sessionStatsFrame.BackgroundColor3 = CONFIG.COLORS.BACKGROUND:lerp(Color3.new(1,1,1), 0.05)
+    sessionStatsFrame.BorderSizePixel = 0
+    sessionStatsFrame.Parent = page
+    Utils.applyCorners(sessionStatsFrame, 10)
+
+    local sessionStatsLayout = Instance.new("UIListLayout")
+    sessionStatsLayout.FillDirection = Enum.FillDirection.Vertical
+    sessionStatsLayout.Padding = UDim.new(0, 5)
+    sessionStatsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    sessionStatsLayout.Parent = sessionStatsFrame
+
+    self.components.sessionTime = createInfoText(sessionStatsFrame, "Session Time: ", "0s", "SessionTimeText")
+    self.components.speedChanges = createInfoText(sessionStatsFrame, "Speed Changes: ", self.stats.speedChanges, "SpeedChangesText")
+    self.components.jumpChanges = createInfoText(sessionStatsFrame, "Jump Changes: ", self.stats.jumpChanges, "JumpChangesText")
 end
 
 function NatHubController:createSettingsPage(parent)
-    local settingsPage = Instance.new("Frame")
-    settingsPage.Name = "SettingsPage"
-    settingsPage.Size = UDim2.new(1, 0, 0, 800)
-    settingsPage.Position = UDim2.new(0, 0, 0, 0)
-    settingsPage.BackgroundTransparency = 1
-    settingsPage.Visible = false
-    settingsPage.Parent = parent
-    
-    -- Audio Settings Card
-    local audioCard = self:createCard(settingsPage, "Audio Settings", UDim2.new(1, 0, 0, 120), UDim2.new(0, 0, 0, 0))
-    self:createAudioSettings(audioCard)
-    
-    -- Application Settings Card
-    local appCard = self:createCard(settingsPage, "Application Settings", UDim2.new(1, 0, 0, 150), UDim2.new(0, 0, 0, 130))
-    self:createApplicationSettings(appCard)
-    
-    -- Advanced Settings Card
-    local advancedCard = self:createCard(settingsPage, "Advanced Settings", UDim2.new(1, 0, 0, 100), UDim2.new(0, 0, 0, 290))
-    self:createAdvancedSettings(advancedCard)
-    
-    self.pages.Settings = settingsPage
+    local page = self:createPageFrame(parent, "Settings")
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Vertical
+    layout.Padding = UDim.new(0, 20)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.Parent = page
+
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.BackgroundTransparency = 1
+    title.Text = "Settings"
+    title.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    title.TextSize = 24
+    title.Font = CONFIG.UI.FONT_BOLD
+    title.Parent = page
+
+    -- Sound Toggle
+    self:createToggle(page, "Sound Effects", self.settings.soundEnabled, function(value)
+        self.settings.soundEnabled = value
+        self:saveSettings()
+    end, "soundToggle")
+
+    -- Auto Apply Toggle
+    self:createToggle(page, "Auto Apply Changes", self.settings.autoApply, function(value)
+        self.settings.autoApply = value
+        self:saveSettings()
+    end, "autoApplyToggle")
+
+    -- Save Settings Toggle
+    self:createToggle(page, "Save Settings (Persistent)", self.settings.saveSettings, function(value)
+        self.settings.saveSettings = value
+        self:saveSettings()
+    end, "saveSettingsToggle")
+
+    -- Animations Toggle
+    self:createToggle(page, "UI Animations", self.settings.animations, function(value)
+        self.settings.animations = value
+        self:saveSettings()
+    end, "animationsToggle")
+
+    -- Keybind Selector (Advanced Feature)
+    self:createKeybindSelector(page, "Toggle Keybind", self.settings.keybind, function(newKeybind)
+        self.settings.keybind = newKeybind
+        self:saveSettings()
+        print("Keybind updated to: " .. newKeybind.Name)
+        self.components.toggleButton.Text = "Press " .. newKeybind.Name .. " to open"
+    end)
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- CARD CREATION METHOD
+-- UI COMPONENTS
 -- ═══════════════════════════════════════════════════════════════
 
-function NatHubController:createCard(parent, title, size, position)
-    local card = Instance.new("Frame")
-    card.Name = title:gsub("%s+", "") .. "Card"
-    card.Size = size
-    card.Position = position
-    card.BackgroundColor3 = CONFIG.COLORS.SIDEBAR
-    card.BorderSizePixel = 0
-    card.Parent = parent
-    
-    Utils.applyCorners(card, CONFIG.UI.CORNER_RADIUS)
-    
-    -- Card gradient effect
-    Utils.createGradient(card, ColorSequence.new({
-        ColorSequenceKeypoint.new(0, CONFIG.COLORS.SIDEBAR),
-        ColorSequenceKeypoint.new(1, CONFIG.COLORS.SIDEBAR:lerp(Color3.new(0, 0, 0), 0.3))
-    }), 145)
-    
-    -- Card border
-    local border = Instance.new("UIStroke")
-    border.Color = CONFIG.COLORS.BORDER
-    border.Thickness = 1
-    border.Transparency = 0.4
-    border.Parent = card
-    
-    -- Card title (only if title is provided)
-    if title and title ~= "" then
-        local cardTitle = Instance.new("TextLabel")
-        cardTitle.Name = "CardTitle"
-        cardTitle.Size = UDim2.new(1, -40, 0, 35)
-        cardTitle.Position = UDim2.new(0, 20, 0, 10)
-        cardTitle.BackgroundTransparency = 1
-        cardTitle.Text = title
-        cardTitle.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-        cardTitle.TextSize = 18
-        cardTitle.Font = Enum.Font.GothamBold
-        cardTitle.TextXAlignment = Enum.TextXAlignment.Left
-        cardTitle.Parent = card
-        
-        -- Add divider under title
-        Utils.addDivider(card, UDim2.new(0, 20, 0, 45))
-    end
-    
-    return card
-end
+function NatHubController:createAdvancedSlider(parent, name, min, max, defaultValue, onChangeCallback)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Name = name .. "SliderFrame"
+    sliderFrame.Size = UDim2.new(0.9, 0, 0, 70)
+    sliderFrame.BackgroundTransparency = 1
+    sliderFrame.Parent = parent
 
--- ═══════════════════════════════════════════════════════════════
--- SPEED CONTROL COMPONENTS
--- ═══════════════════════════════════════════════════════════════
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 20)
+    title.BackgroundTransparency = 1
+    title.Text = name .. ": " .. math.floor(defaultValue)
+    title.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    title.TextSize = 18
+    title.Font = CONFIG.UI.FONT
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = sliderFrame
+    self.components[name .. "SliderTitle"] = title
 
-function NatHubController:createAdvancedSlider(parent)
-    local sliderContainer = Instance.new("Frame")
-    sliderContainer.Name = "SliderContainer"
-    sliderContainer.Size = UDim2.new(1, -40, 0, 70)
-    sliderContainer.Position = UDim2.new(0, 20, 0, 50)
-    sliderContainer.BackgroundTransparency = 1
-    sliderContainer.Parent = parent
-    
-    -- Speed range labels
-    local minLabel = Instance.new("TextLabel")
-    minLabel.Size = UDim2.new(0, 30, 0, 20)
-    minLabel.Position = UDim2.new(0, 0, 0, 50)
-    minLabel.BackgroundTransparency = 1
-    minLabel.Text = tostring(CONFIG.SPEED.MIN)
-    minLabel.TextColor3 = CONFIG.COLORS.TEXT_SECONDARY
-    minLabel.TextSize = 14
-    minLabel.Font = Enum.Font.Gotham
-    minLabel.Parent = sliderContainer
-    
-    local maxLabel = Instance.new("TextLabel")
-    maxLabel.Size = UDim2.new(0, 30, 0, 20)
-    maxLabel.Position = UDim2.new(1, -30, 0, 50)
-    maxLabel.BackgroundTransparency = 1
-    maxLabel.Text = tostring(CONFIG.SPEED.MAX)
-    maxLabel.TextColor3 = CONFIG.COLORS.TEXT_SECONDARY
-    maxLabel.TextSize = 14
-    maxLabel.Font = Enum.Font.Gotham
-    maxLabel.Parent = sliderContainer
-    
-    -- Slider track
-    local sliderTrack = Instance.new("Frame")
-    sliderTrack.Name = "SliderTrack"  
-    sliderTrack.Size = UDim2.new(1, -60, 0, 12)
-    sliderTrack.Position = UDim2.new(0, 30, 0, 20)
-    sliderTrack.BackgroundColor3 = CONFIG.COLORS.BORDER
-    sliderTrack.BorderSizePixel = 0
-    sliderTrack.Parent = sliderContainer
-    
-    Utils.applyCorners(sliderTrack, 6)
-    
-    -- Slider fill
+    local sliderBackground = Instance.new("Frame")
+    sliderBackground.Name = "SliderBackground"
+    sliderBackground.Size = UDim2.new(1, 0, 0, 10)
+    sliderBackground.Position = UDim2.new(0, 0, 0, 30)
+    sliderBackground.BackgroundColor3 = CONFIG.COLORS.BORDER
+    sliderBackground.BorderSizePixel = 0
+    sliderBackground.Parent = sliderFrame
+    Utils.applyCorners(sliderBackground, 5)
+
     local sliderFill = Instance.new("Frame")
     sliderFill.Name = "SliderFill"
-    sliderFill.Size = UDim2.new((self.currentSpeed - CONFIG.SPEED.MIN) / (CONFIG.SPEED.MAX - CONFIG.SPEED.MIN), 0, 1, 0)
-    sliderFill.Position = UDim2.new(0, 0, 0, 0)
+    sliderFill.Size = UDim2.new((defaultValue - min) / (max - min), 0, 1, 0)
     sliderFill.BackgroundColor3 = CONFIG.COLORS.ACCENT
     sliderFill.BorderSizePixel = 0
-    sliderFill.Parent = sliderTrack
-    
-    Utils.applyCorners(sliderFill, 6)
-    
-    -- Fill gradient
-    Utils.createGradient(sliderFill, ColorSequence.new({
-        ColorSequenceKeypoint.new(0, CONFIG.COLORS.GRADIENT_START),
-        ColorSequenceKeypoint.new(1, CONFIG.COLORS.GRADIENT_END)
-    }), 0)
-    
-    -- Slider handle
-    local sliderHandle = Instance.new("TextButton") 
+    sliderFill.Parent = sliderBackground
+    Utils.applyCorners(sliderFill, 5)
+    self.components[name .. "SliderFill"] = sliderFill
+
+    local sliderHandle = Instance.new("ImageLabel") -- Changed to ImageLabel for better visual
     sliderHandle.Name = "SliderHandle"
-    sliderHandle.Size = UDim2.new(0, 28, 0, 28)
-    sliderHandle.Position = UDim2.new((self.currentSpeed - CONFIG.SPEED.MIN) / (CONFIG.SPEED.MAX - CONFIG.SPEED.MIN), -14, 0.5, -14)
-    sliderHandle.BackgroundColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    sliderHandle.Text = ""
+    sliderHandle.Size = UDim2.new(0, 20, 0, 20)
+    sliderHandle.Position = UDim2.new((defaultValue - min) / (max - min), -10, 0, 25)
+    sliderHandle.BackgroundColor3 = CONFIG.COLORS.ACCENT_HOVER
+    sliderHandle.Image = "rbxassetid://1234567898" -- Placeholder for a handle icon
+    sliderHandle.ImageColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    sliderHandle.BackgroundTransparency = 0
     sliderHandle.BorderSizePixel = 0
     sliderHandle.ZIndex = 2
-    sliderHandle.Parent = sliderContainer
-    
-    Utils.applyCorners(sliderHandle, 14)
-    
-    -- Handle shadow
-    Utils.createShadow(sliderHandle, 4, 0.8)
-    
-    -- Store slider references
-    self.components.sliderTrack = sliderTrack
-    self.components.sliderFill = sliderFill
-    self.components.sliderHandle = sliderHandle
-    
-    -- Setup slider interaction
-    self:setupSliderInteraction()
-end
+    sliderHandle.Parent = sliderFrame
+    Utils.applyCorners(sliderHandle, 10)
+    self.components[name .. "SliderHandle"] = sliderHandle
 
-function NatHubController:createSpeedInput(parent)
-    local inputContainer = Instance.new("Frame")
-    inputContainer.Name = "InputContainer"
-    inputContainer.Size = UDim2.new(1, -40, 0, 40)
-    inputContainer.Position = UDim2.new(0, 20, 0, 30)
-    inputContainer.BackgroundTransparency = 1
-    inputContainer.Parent = parent
-    
-    local speedInput = Instance.new("TextBox")
-    speedInput.Name = "SpeedInput"
-    speedInput.Size = UDim2.new(0.6, 0, 1, 0)
-    speedInput.Position = UDim2.new(0, 0, 0, 0)
-    speedInput.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
-    speedInput.Text = tostring(self.currentSpeed)
-    speedInput.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    speedInput.TextSize = 16
-    speedInput.Font = Enum.Font.Gotham
-    speedInput.PlaceholderText = "Enter speed (1-" .. CONFIG.SPEED.MAX .. ")"
-    speedInput.PlaceholderColor3 = CONFIG.COLORS.TEXT_MUTED
-    speedInput.BorderSizePixel = 0
-    speedInput.ClearTextOnFocus = false
-    speedInput.Parent = inputContainer
-    
-    Utils.applyCorners(speedInput, 8)
-    
-    -- Input border
-    local inputBorder = Instance.new("UIStroke")
-    inputBorder.Color = CONFIG.COLORS.BORDER
-    inputBorder.Thickness = 2
-    inputBorder.Transparency = 0.5
-    inputBorder.Parent = speedInput
-    
-    -- Apply button
-    local applyBtn = Instance.new("TextButton")
-    applyBtn.Name = "ApplyButton"
-    applyBtn.Size = UDim2.new(0.35, 0, 1, 0)
-    applyBtn.Position = UDim2.new(0.63, 0, 0, 0)
-    applyBtn.BackgroundColor3 = CONFIG.COLORS.SUCCESS
-    applyBtn.Text = "Apply"
-    applyBtn.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    applyBtn.TextSize = 16
-    applyBtn.Font = Enum.Font.GothamBold
-    applyBtn.BorderSizePixel = 0
-    applyBtn.Parent = inputContainer
-    
-    Utils.applyCorners(applyBtn, 8)
-    
-    -- Input events
-    speedInput.FocusLost:Connect(function(enterPressed)
-        local inputValue = Utils.validateNumber(speedInput.Text, CONFIG.SPEED.MIN, CONFIG.SPEED.MAX, self.currentSpeed)
-        inputValue = Utils.formatNumber(inputValue, CONFIG.SPEED.PRECISION)
-        speedInput.Text = tostring(inputValue)
-        
-        if enterPressed then
-            self:setSpeed(inputValue)
+    local isDragging = false
+    local currentConnection
+
+    local function updateSlider(input)
+        local mouseX = input.Position.X - sliderBackground.AbsolutePosition.X
+        local percentage = math.clamp(mouseX / sliderBackground.AbsoluteSize.X, 0, 1)
+        local value = min + (max - min) * percentage
+        value = math.floor(value * 10 + 0.5) / 10 -- Round to one decimal place
+
+        sliderFill.Size = UDim2.new(percentage, 0, 1, 0)
+        sliderHandle.Position = UDim2.new(percentage, -10, 0, 25)
+        title.Text = name .. ": " .. (name == "JumpHeight" or name == "HipHeight" and string.format("%.1f", value) or math.floor(value))
+        onChangeCallback(value)
+    end
+
+    self.connections[name .. "SliderHandle_MouseDown"] = sliderHandle.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+            self:playSound("click")
+            currentConnection = UserInputService.InputChanged:Connect(function(inputChanged)
+                if isDragging and inputChanged.UserInputType == Enum.UserInputType.MouseMovement then
+                    updateSlider(inputChanged)
+                end
+            end)
         end
     end)
-    
-    speedInput.Focused:Connect(function()
-        Utils.createTween(inputBorder, TweenInfo.new(0.2), {Color = CONFIG.COLORS.ACCENT, Transparency = 0.2})
+
+    self.connections[name .. "SliderHandle_MouseUp"] = UserInputService.InputEnded:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = false
+            if currentConnection then
+                currentConnection:Disconnect()
+                currentConnection = nil
+            end
+        end
     end)
-    
-    speedInput.FocusLost:Connect(function()
-        Utils.createTween(inputBorder, TweenInfo.new(0.2), {Color = CONFIG.COLORS.BORDER, Transparency = 0.5})
+
+    self.connections[name .. "SliderBackground_Click"] = sliderBackground.MouseButton1Click:Connect(function(x, y, input)
+        updateSlider(input)
+        self:playSound("click")
     end)
-    
-    applyBtn.MouseButton1Click:Connect(function()
-        local inputValue = Utils.validateNumber(speedInput.Text, CONFIG.SPEED.MIN, CONFIG.SPEED.MAX, self.currentSpeed)
-        self:setSpeed(inputValue)
-        self:playSound("success")
+
+    -- Hover effects for handle
+    self.connections[name .. "SliderHandle_MouseEnter"] = sliderHandle.MouseEnter:Connect(function()
+        self:playSound("hover")
+        if self.settings.animations then
+            Utils.createTween(sliderHandle, TweenInfo.new(0.1), {Size = UDim2.new(0, 24, 0, 24), Position = UDim2.new(sliderHandle.Position.X.Scale, -12, 0, 23)})
+        end
     end)
-    
-    -- Apply button hover
-    applyBtn.MouseEnter:Connect(function()
-        Utils.createTween(applyBtn, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.SUCCESS:lerp(Color3.new(1, 1, 1), 0.2)})
+
+    self.connections[name .. "SliderHandle_MouseLeave"] = sliderHandle.MouseLeave:Connect(function()
+        if self.settings.animations then
+            Utils.createTween(sliderHandle, TweenInfo.new(0.1), {Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(sliderHandle.Position.X.Scale, -10, 0, 25)})
+        end
     end)
-    
-    applyBtn.MouseLeave:Connect(function()
-        Utils.createTween(applyBtn, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.SUCCESS})
-    end)
-    
-    self.components.speedInput = speedInput
 end
 
-function NatHubController:createSpeedPresets(parent)
-    local presetsContainer = Instance.new("Frame")
-    presetsContainer.Name = "PresetsContainer"
-    presetsContainer.Size = UDim2.new(1, -40, 0, 90)
-    presetsContainer.Position = UDim2.new(0, 20, 0, 50)
-    presetsContainer.BackgroundTransparency = 1
-    presetsContainer.Parent = parent
-    
-    local presets = {
-        {name = "Walk", speed = 16, color = CONFIG.COLORS.SUCCESS},
-        {name = "Jog", speed = 25, color = CONFIG.COLORS.INFO},
-        {name = "Run", speed = 35, color = CONFIG.COLORS.WARNING},
-        {name = "Sprint", speed = 50, color = CONFIG.COLORS.DANGER},
-        {name = "Flash", speed = 75, color = CONFIG.COLORS.GRADIENT_START},
-        {name = "Max", speed = 100, color = CONFIG.COLORS.GRADIENT_END}
-    }
-    
-    for i, preset in ipairs(presets) do
-        local row = math.floor((i - 1) / 3)
-        local col = (i - 1) % 3
-        
-        local btn = Instance.new("TextButton")
-        btn.Name = preset.name .. "Button"
-        btn.Size = UDim2.new(0.31, 0, 0, 35)
-        btn.Position = UDim2.new(col * 0.34, 0, row * 45, 0)
-        btn.BackgroundColor3 = preset.color
-        btn.Text = preset.name .. " (" .. preset.speed .. ")"
-        btn.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-        btn.TextSize = 14
-        btn.Font = Enum.Font.GothamBold
-        btn.BorderSizePixel = 0
-        btn.Parent = presetsContainer
-        
-        Utils.applyCorners(btn, 8)
-        
-        -- Button gradient
-        Utils.createGradient(btn, ColorSequence.new({
-            ColorSequenceKeypoint.new(0, preset.color),
-            ColorSequenceKeypoint.new(1, preset.color:lerp(Color3.new(0, 0, 0), 0.3))
-        }), 45)
-        
-        -- Button events
-        btn.MouseButton1Click:Connect(function()
-            self:setSpeed(preset.speed)
-            self:playButtonAnimation(btn)
+function NatHubController:createSpeedInput(parent, onChangeCallback)
+    local inputFrame = Instance.new("Frame")
+    inputFrame.Name = "SpeedInputFrame"
+    inputFrame.Size = UDim2.new(0.9, 0, 0, 40)
+    inputFrame.BackgroundTransparency = 1
+    inputFrame.Parent = parent
+
+    local inputTextBox = Instance.new("TextBox")
+    inputTextBox.Name = "SpeedTextBox"
+    inputTextBox.Size = UDim2.new(0.6, 0, 1, 0)
+    inputTextBox.PlaceholderText = "Enter Speed"
+    inputTextBox.Text = tostring(self.currentSpeed)
+    inputTextBox.BackgroundColor3 = CONFIG.COLORS.BACKGROUND:lerp(Color3.new(1,1,1), 0.1)
+    inputTextBox.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    inputTextBox.TextSize = 16
+    inputTextBox.Font = CONFIG.UI.FONT
+    inputTextBox.ClearTextOnFocus = true
+    inputTextBox.BorderSizePixel = 0
+    inputTextBox.Parent = inputFrame
+    Utils.applyCorners(inputTextBox, 5)
+
+    local applyButton = Instance.new("TextButton")
+    applyButton.Name = "InputApplyButton"
+    applyButton.Size = UDim2.new(0.35, 0, 1, 0)
+    applyButton.Position = UDim2.new(0.65, 0, 0, 0)
+    applyButton.BackgroundColor3 = CONFIG.COLORS.ACCENT
+    applyButton.Text = "Set"
+    applyButton.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    applyButton.TextSize = 16
+    applyButton.Font = CONFIG.UI.FONT_BOLD
+    applyButton.BorderSizePixel = 0
+    applyButton.Parent = inputFrame
+    Utils.applyCorners(applyButton, 5)
+
+    local function applyInput()
+        local value = Utils.validateNumber(inputTextBox.Text, CONFIG.SPEED.MIN, CONFIG.SPEED.MAX, self.currentSpeed)
+        inputTextBox.Text = tostring(math.floor(value))
+        onChangeCallback(value)
+        self:playSound("click")
+    end
+
+    self.connections.speedInput_FocusLost = inputTextBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            applyInput()
+        end
+    end)
+
+    self.connections.speedInput_ApplyBtn = applyButton.MouseButton1Click:Connect(applyInput)
+
+    self.connections.speedInput_MouseEnter = applyButton.MouseEnter:Connect(function()
+        self:playSound("hover")
+        if self.settings.animations then
+            Utils.createTween(applyButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.ACCENT_HOVER})
+        end
+    end)
+
+    self.connections.speedInput_MouseLeave = applyButton.MouseLeave:Connect(function()
+        if self.settings.animations then
+            Utils.createTween(applyButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.ACCENT})
+        end
+    end)
+end
+
+function NatHubController:createSpeedPresets(parent, onPresetSelectedCallback)
+    local presetsFrame = Instance.new("Frame")
+    presetsFrame.Name = "SpeedPresetsFrame"
+    presetsFrame.Size = UDim2.new(0.9, 0, 0, 50)
+    presetsFrame.BackgroundTransparency = 1
+    presetsFrame.Parent = parent
+
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.Padding = UDim.new(0, 10)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.Parent = presetsFrame
+
+    for _, presetValue in ipairs(CONFIG.SPEED.PRESETS) do
+        local presetButton = Instance.new("TextButton")
+        presetButton.Name = "Preset" .. presetValue
+        presetButton.Size = UDim2.new(0.2, 0, 1, 0)
+        presetButton.BackgroundColor3 = CONFIG.COLORS.HOVER
+        presetButton.Text = tostring(presetValue)
+        presetButton.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+        presetButton.TextSize = 16
+        presetButton.Font = CONFIG.UI.FONT_BOLD
+        presetButton.BorderSizePixel = 0
+        presetButton.Parent = presetsFrame
+        Utils.applyCorners(presetButton, 5)
+
+        self.connections["presetBtn_Click_" .. presetValue] = presetButton.MouseButton1Click:Connect(function()
+            onPresetSelectedCallback(presetValue)
             self:playSound("click")
+            Utils.createTween(presetButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = CONFIG.COLORS.ACCENT}, function()
+                Utils.createTween(presetButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = CONFIG.COLORS.HOVER})
+            end)
         end)
-        
-        btn.MouseEnter:Connect(function()
+
+        self.connections["presetBtn_MouseEnter_" .. presetValue] = presetButton.MouseEnter:Connect(function()
             self:playSound("hover")
-            Utils.createTween(btn, TweenInfo.new(0.2), {
-                Size = UDim2.new(0.31, 0, 0, 38),
-                BackgroundColor3 = preset.color:lerp(Color3.new(1, 1, 1), 0.2)
-            })
+            if self.settings.animations then
+                Utils.createTween(presetButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.ACCENT_HOVER})
+            end
         end)
-        
-        btn.MouseLeave:Connect(function()
-            Utils.createTween(btn, TweenInfo.new(0.2), {
-                Size = UDim2.new(0.31, 0, 0, 35),
-                BackgroundColor3 = preset.color
-            })
+
+        self.connections["presetBtn_MouseLeave_" .. presetValue] = presetButton.MouseLeave:Connect(function()
+            if self.settings.animations then
+                Utils.createTween(presetButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.HOVER})
+            end
         end)
     end
 end
 
--- ═══════════════════════════════════════════════════════════════
--- JUMP CONTROL COMPONENTS
--- ═══════════════════════════════════════════════════════════════
-
-function NatHubController:createJumpPowerControls(parent)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(1, -40, 0, 50)
-    container.Position = UDim2.new(0, 20, 0, 50)
-    container.BackgroundTransparency = 1
-    container.Parent = parent
-    
-    local jumpInput = Instance.new("TextBox")
-    jumpInput.Size = UDim2.new(0.6, 0, 0, 40)
-    jumpInput.Position = UDim2.new(0, 0, 0, 5)
-    jumpInput.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
-    jumpInput.Text = tostring(self.currentJumpPower)
-    jumpInput.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    jumpInput.TextSize = 16
-    jumpInput.Font = Enum.Font.Gotham
-    jumpInput.PlaceholderText = "Enter jump power (1-200)"
-    jumpInput.BorderSizePixel = 0
-    jumpInput.Parent = container
-    
-    Utils.applyCorners(jumpInput, 8)
-    
-    local applyBtn = Instance.new("TextButton")
-    applyBtn.Size = UDim2.new(0.35, 0, 0, 40)
-    applyBtn.Position = UDim2.new(0.63, 0, 0, 5)
-    applyBtn.BackgroundColor3 = CONFIG.COLORS.SUCCESS
-    applyBtn.Text = "Apply"
-    applyBtn.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    applyBtn.TextSize = 16
-    applyBtn.Font = Enum.Font.GothamBold
-    applyBtn.BorderSizePixel = 0
-    applyBtn.Parent = container
-    
-    Utils.applyCorners(applyBtn, 8)
-    
-    applyBtn.MouseButton1Click:Connect(function()
-        local value = Utils.validateNumber(jumpInput.Text, 1, 200, self.currentJumpPower)
-        self:setJumpPower(value)
-        jumpInput.Text = tostring(value)
-        self:playSound("success")
-    end)
-end
-
-function NatHubController:createJumpHeightControls(parent)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(1, -40, 0, 50)
-    container.Position = UDim2.new(0, 20, 0, 50)
-    container.BackgroundTransparency = 1
-    container.Parent = parent
-    
-    local heightInput = Instance.new("TextBox")
-    heightInput.Size = UDim2.new(0.6, 0, 0, 40)
-    heightInput.Position = UDim2.new(0, 0, 0, 5)
-    heightInput.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
-    heightInput.Text = tostring(self.currentJumpHeight)
-    heightInput.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    heightInput.TextSize = 16
-    heightInput.Font = Enum.Font.Gotham
-    heightInput.PlaceholderText = "Enter jump height (1-50)"
-    heightInput.BorderSizePixel = 0
-    heightInput.Parent = container
-    
-    Utils.applyCorners(heightInput, 8)
-    
-    local applyBtn = Instance.new("TextButton")
-    applyBtn.Size = UDim2.new(0.35, 0, 0, 40)
-    applyBtn.Position = UDim2.new(0.63, 0, 0, 5)
-    applyBtn.BackgroundColor3 = CONFIG.COLORS.SUCCESS
-    applyBtn.Text = "Apply"
-    applyBtn.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    applyBtn.TextSize = 16
-    applyBtn.Font = Enum.Font.GothamBold
-    applyBtn.BorderSizePixel = 0
-    applyBtn.Parent = container
-    
-    Utils.applyCorners(applyBtn, 8)
-    
-    applyBtn.MouseButton1Click:Connect(function()
-        local value = Utils.validateNumber(heightInput.Text, 1, 50, self.currentJumpHeight)
-        self:setJumpHeight(value)
-        heightInput.Text = tostring(value)
-        self:playSound("success")
-    end)
-end
-
-function NatHubController:createHipHeightControls(parent)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(1, -40, 0, 50)
-    container.Position = UDim2.new(0, 20, 0, 50)
-    container.BackgroundTransparency = 1
-    container.Parent = parent
-    
-    local hipInput = Instance.new("TextBox")
-    hipInput.Size = UDim2.new(0.6, 0, 0, 40)
-    hipInput.Position = UDim2.new(0, 0, 0, 5)
-    hipInput.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
-    hipInput.Text = "0"
-    hipInput.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    hipInput.TextSize = 16
-    hipInput.Font = Enum.Font.Gotham
-    hipInput.PlaceholderText = "Enter hip height (0-10)"
-    hipInput.BorderSizePixel = 0
-    hipInput.Parent = container
-    
-    Utils.applyCorners(hipInput, 8)
-    
-    local applyBtn = Instance.new("TextButton")
-    applyBtn.Size = UDim2.new(0.35, 0, 0, 40)
-    applyBtn.Position = UDim2.new(0.63, 0, 0, 5)
-    applyBtn.BackgroundColor3 = CONFIG.COLORS.SUCCESS
-    applyBtn.Text = "Apply"
-    applyBtn.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    applyBtn.TextSize = 16
-    applyBtn.Font = Enum.Font.GothamBold
-    applyBtn.BorderSizePixel = 0
-    applyBtn.Parent = container
-    
-    Utils.applyCorners(applyBtn, 8)
-    
-    applyBtn.MouseButton1Click:Connect(function()
-        local value = Utils.validateNumber(hipInput.Text, 0, 10, 0)
-        self:setHipHeight(value)
-        hipInput.Text = tostring(value)
-        self:playSound("success")
-    end)
-end
-
--- ═══════════════════════════════════════════════════════════════
--- INFORMATION PAGE COMPONENTS
--- ═══════════════════════════════════════════════════════════════
-
-function NatHubController:createPlayerInfo(parent)
-    -- Player avatar section
-    local avatarContainer = Instance.new("Frame")
-    avatarContainer.Name = "AvatarContainer"
-    avatarContainer.Size = UDim2.new(0, 120, 0, 120)
-    avatarContainer.Position = UDim2.new(0, 30, 0, 20)
-    avatarContainer.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
-    avatarContainer.BorderSizePixel = 0
-    avatarContainer.Parent = parent
-    
-    Utils.applyCorners(avatarContainer, 15)
-    
-    -- Avatar border
-    local avatarBorder = Instance.new("UIStroke")
-    avatarBorder.Color = CONFIG.COLORS.ACCENT
-    avatarBorder.Thickness = 3
-    avatarBorder.Transparency = 0.3
-    avatarBorder.Parent = avatarContainer
-    
-    local playerImage = Instance.new("ImageLabel")
-    playerImage.Name = "PlayerImage"
-    playerImage.Size = UDim2.new(1, -10, 1, -10)
-    playerImage.Position = UDim2.new(0, 5, 0, 5)
-    playerImage.BackgroundTransparency = 1
-    playerImage.BorderSizePixel = 0
-    playerImage.Parent = avatarContainer
-    
-    Utils.applyCorners(playerImage, 12)
-    
-    -- Load player avatar safely
-    spawn(function()
-        local success, avatarUrl = pcall(function()
-            return Players:GetUserThumbnailAsync(self.player.UserId, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size150x150)
-        end)
-        
-        if success and avatarUrl then
-            playerImage.Image = avatarUrl
-        else
-            playerImage.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-            playerImage.ImageColor3 = CONFIG.COLORS.ACCENT
-        end
-    end)
-    
-    -- Player details
-    local playerName = Instance.new("TextLabel")
-    playerName.Size = UDim2.new(1, -180, 0, 30)
-    playerName.Position = UDim2.new(0, 170, 0, 30)
-    playerName.BackgroundTransparency = 1
-    playerName.Text = "Player: " .. self.player.Name
-    playerName.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    playerName.TextSize = 18
-    playerName.Font = Enum.Font.GothamBold
-    playerName.TextXAlignment = Enum.TextXAlignment.Left
-    playerName.Parent = parent
-    
-    local playerId = Instance.new("TextLabel")
-    playerId.Size = UDim2.new(1, -180, 0, 25)
-    playerId.Position = UDim2.new(0, 170, 0, 65)
-    playerId.BackgroundTransparency = 1
-    playerId.Text = "User ID: " .. self.player.UserId
-    playerId.TextColor3 = CONFIG.COLORS.TEXT_SECONDARY
-    playerId.TextSize = 16
-    playerId.Font = Enum.Font.Gotham
-    playerId.TextXAlignment = Enum.TextXAlignment.Left
-    playerId.Parent = parent
-    
-    local displayName = Instance.new("TextLabel")
-    displayName.Size = UDim2.new(1, -180, 0, 25)
-    displayName.Position = UDim2.new(0, 170, 0, 95)
-    displayName.BackgroundTransparency = 1
-    displayName.Text = "Display: @" .. (self.player.DisplayName or self.player.Name)
-    displayName.TextColor3 = CONFIG.COLORS.TEXT_SECONDARY
-    displayName.TextSize = 16
-    displayName.Font = Enum.Font.Gotham
-    displayName.TextXAlignment = Enum.TextXAlignment.Left
-    displayName.Parent = parent
-    
-    local accountAge = Instance.new("TextLabel")
-    accountAge.Size = UDim2.new(1, -180, 0, 25)
-    accountAge.Position = UDim2.new(0, 170, 0, 125)
-    accountAge.BackgroundTransparency = 1
-    accountAge.Text = "Account Age: " .. self.player.AccountAge .. " days"
-    accountAge.TextColor3 = CONFIG.COLORS.TEXT_SECONDARY
-    accountAge.TextSize = 16
-    accountAge.Font = Enum.Font.Gotham
-    accountAge.TextXAlignment = Enum.TextXAlignment.Left
-    accountAge.Parent = parent
-end
-
-function NatHubController:createPerformanceStats(parent)
-    local statsContainer = Instance.new("Frame")
-    statsContainer.Size = UDim2.new(1, -40, 0, 130)
-    statsContainer.Position = UDim2.new(0, 20, 0, 50)
-    statsContainer.BackgroundTransparency = 1
-    statsContainer.Parent = parent
-    
-    -- FPS Display
-    local fpsLabel = self:createStatItem(statsContainer, "FPS: 60", UDim2.new(0.48, 0, 0, 35), UDim2.new(0, 0, 0, 0))
-    
-    -- Ping Display
-    local pingLabel = self:createStatItem(statsContainer, "Ping: 0ms", UDim2.new(0.48, 0, 0, 35), UDim2.new(0.52, 0, 0, 0))
-    
-    -- Memory Usage
-    local memoryLabel = self:createStatItem(statsContainer, "Memory: 0MB", UDim2.new(0.48, 0, 0, 35), UDim2.new(0, 0, 0, 45))
-    
-    -- Speed Changes
-    local speedChangesLabel = self:createStatItem(statsContainer, "Speed Changes: 0", UDim2.new(0.48, 0, 0, 35), UDim2.new(0.52, 0, 0, 45))
-    
-    -- Session Duration
-    local sessionLabel = self:createStatItem(statsContainer, "Session: 0s", UDim2.new(1, 0, 0, 35), UDim2.new(0, 0, 0, 90))
-    
-    -- Store references for updates
-    self.components.fpsLabel = fpsLabel
-    self.components.pingLabel = pingLabel
-    self.components.memoryLabel = memoryLabel
-    self.components.speedChangesLabel = speedChangesLabel
-    self.components.sessionLabel = sessionLabel
-end
-
-function NatHubController:createSessionInfo(parent)
-    local sessionContainer = Instance.new("Frame")
-    sessionContainer.Size = UDim2.new(1, -40, 0, 70)
-    sessionContainer.Position = UDim2.new(0, 20, 0, 50)
-    sessionContainer.BackgroundTransparency = 1
-    sessionContainer.Parent = parent
-    
-    local sessionStart = Instance.new("TextLabel")
-    sessionStart.Size = UDim2.new(1, 0, 0, 25)
-    sessionStart.Position = UDim2.new(0, 0, 0, 0)
-    sessionStart.BackgroundTransparency = 1
-    sessionStart.Text = "Session Started: " .. os.date("%H:%M:%S", self.stats.sessionStart)
-    sessionStart.TextColor3 = CONFIG.COLORS.TEXT_SECONDARY
-    sessionStart.TextSize = 16
-    sessionStart.Font = Enum.Font.Gotham
-    sessionStart.TextXAlignment = Enum.TextXAlignment.Left
-    sessionStart.Parent = sessionContainer
-    
-    local currentTime = Instance.new("TextLabel")
-    currentTime.Size = UDim2.new(1, 0, 0, 25)
-    currentTime.Position = UDim2.new(0, 0, 0, 30)
-    currentTime.BackgroundTransparency = 1
-    currentTime.Text = "Current Time: " .. os.date("%H:%M:%S")
-    currentTime.TextColor3 = CONFIG.COLORS.TEXT_SECONDARY
-    currentTime.TextSize = 16
-    currentTime.Font = Enum.Font.Gotham
-    currentTime.TextXAlignment = Enum.TextXAlignment.Left
-    currentTime.Parent = sessionContainer
-    
-    self.components.currentTimeLabel = currentTime
-end
-
-function NatHubController:createStatItem(parent, text, size, position)
-    local statItem = Instance.new("Frame")
-    statItem.Size = size
-    statItem.Position = position
-    statItem.BackgroundColor3 = CONFIG.COLORS.BACKGROUND
-    statItem.BorderSizePixel = 0
-    statItem.Parent = parent
-    
-    Utils.applyCorners(statItem, 8)
-    
-    local statBorder = Instance.new("UIStroke")
-    statBorder.Color = CONFIG.COLORS.BORDER
-    statBorder.Thickness = 1
-    statBorder.Transparency = 0.5
-    statBorder.Parent = statItem
-    
-    local statLabel = Instance.new("TextLabel")
-    statLabel.Size = UDim2.new(1, -20, 1, 0)
-    statLabel.Position = UDim2.new(0, 10, 0, 0)
-    statLabel.BackgroundTransparency = 1
-    statLabel.Text = text
-    statLabel.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    statLabel.TextSize = 14
-    statLabel.Font = Enum.Font.Gotham
-    statLabel.TextXAlignment = Enum.TextXAlignment.Left
-    statLabel.Parent = statItem
-    
-    return statLabel
-end
-
--- ═══════════════════════════════════════════════════════════════
--- SETTINGS PAGE COMPONENTS
--- ═══════════════════════════════════════════════════════════════
-
-function NatHubController:createAudioSettings(parent)
-    local audioContainer = Instance.new("Frame")
-    audioContainer.Size = UDim2.new(1, -40, 0, 70)
-    audioContainer.Position = UDim2.new(0, 20, 0, 50)
-    audioContainer.BackgroundTransparency = 1
-    audioContainer.Parent = parent
-    
-    -- Sound Effects Toggle
-    self:createToggleSetting(audioContainer, "Sound Effects", "soundEnabled", UDim2.new(0, 0, 0, 0))
-    
-    -- Button Sounds Toggle  
-    self:createToggleSetting(audioContainer, "Button Sounds", "buttonSounds", UDim2.new(0, 0, 0, 35))
-end
-
-function NatHubController:createApplicationSettings(parent)
-    local appContainer = Instance.new("Frame")
-    appContainer.Size = UDim2.new(1, -40, 0, 100)
-    appContainer.Position = UDim2.new(0, 20, 0, 50)
-    appContainer.BackgroundTransparency = 1
-    appContainer.Parent = parent
-    
-    -- Auto Apply Toggle
-    self:createToggleSetting(appContainer, "Auto Apply on Spawn", "autoApply", UDim2.new(0, 0, 0, 0))
-    
-    -- Save Settings Toggle
-    self:createToggleSetting(appContainer, "Save Settings", "saveSettings", UDim2.new(0, 0, 0, 35))
-    
-    -- Animations Toggle
-    self:createToggleSetting(appContainer, "UI Animations", "animations", UDim2.new(0, 0, 0, 70))
-end
-
-function NatHubController:createAdvancedSettings(parent)
-    local advancedContainer = Instance.new("Frame")
-    advancedContainer.Size = UDim2.new(1, -40, 0, 50)
-    advancedContainer.Position = UDim2.new(0, 20, 0, 50)
-    advancedContainer.BackgroundTransparency = 1
-    advancedContainer.Parent = parent
-    
-    -- Reset Settings Button
-    local resetBtn = Instance.new("TextButton")
-    resetBtn.Size = UDim2.new(0.48, 0, 0, 40)
-    resetBtn.Position = UDim2.new(0, 0, 0, 5)
-    resetBtn.BackgroundColor3 = CONFIG.COLORS.WARNING
-    resetBtn.Text = "Reset Settings"
-    resetBtn.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    resetBtn.TextSize = 16
-    resetBtn.Font = Enum.Font.GothamBold
-    resetBtn.BorderSizePixel = 0
-    resetBtn.Parent = advancedContainer
-    
-    Utils.applyCorners(resetBtn, 8)
-    
-    -- Export Settings Button
-    local exportBtn = Instance.new("TextButton")
-    exportBtn.Size = UDim2.new(0.48, 0, 0, 40)
-    exportBtn.Position = UDim2.new(0.52, 0, 0, 5)
-    exportBtn.BackgroundColor3 = CONFIG.COLORS.INFO
-    exportBtn.Text = "Export Data"
-    exportBtn.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    exportBtn.TextSize = 16
-    exportBtn.Font = Enum.Font.GothamBold
-    exportBtn.BorderSizePixel = 0
-    exportBtn.Parent = advancedContainer
-    
-    Utils.applyCorners(exportBtn, 8)
-    
-    -- Button events
-    resetBtn.MouseButton1Click:Connect(function()
-        self:resetSettings()
-        self:playSound("success")
-    end)
-    
-    exportBtn.MouseButton1Click:Connect(function()
-        self:exportSettings()
-        self:playSound("success")
-    end)
-end
-
-function NatHubController:createToggleSetting(parent, labelText, settingKey, position)
-    local settingContainer = Instance.new("Frame")
-    settingContainer.Size = UDim2.new(1, 0, 0, 30)
-    settingContainer.Position = position
-    settingContainer.BackgroundTransparency = 1
-    settingContainer.Parent = parent
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.Position = UDim2.new(0, 0, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = labelText
-    label.TextColor3 = CONFIG.COLORS.TEXT_SECONDARY
-    label.TextSize = 16
-    label.Font = Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = settingContainer
-    
+function NatHubController:createToggle(parent, text, defaultValue, onChangeCallback, namePrefix)
     local toggleFrame = Instance.new("Frame")
-    toggleFrame.Size = UDim2.new(0, 60, 0, 25)
-    toggleFrame.Position = UDim2.new(0.75, 0, 0, 2.5)
-    toggleFrame.BackgroundColor3 = self.settings[settingKey] and CONFIG.COLORS.SUCCESS or CONFIG.COLORS.BORDER
-    toggleFrame.BorderSizePixel = 0
-    toggleFrame.Parent = settingContainer
-    
-    Utils.applyCorners(toggleFrame, 12)
-    
-    local toggleButton = Instance.new("TextButton")
-    toggleButton.Size = UDim2.new(0, 21, 0, 21)
-    toggleButton.Position = self.settings[settingKey] and UDim2.new(0, 37, 0, 2) or UDim2.new(0, 2, 0, 2)
-    toggleButton.BackgroundColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    toggleButton.Text = ""
+    toggleFrame.Name = namePrefix .. "ToggleFrame"
+    toggleFrame.Size = UDim2.new(0.9, 0, 0, 40)
+    toggleFrame.BackgroundTransparency = 1
+    toggleFrame.Parent = parent
+
+    local toggleText = Instance.new("TextLabel")
+    toggleText.Size = UDim2.new(0.7, 0, 1, 0)
+    toggleText.BackgroundTransparency = 1
+    toggleText.Text = text
+    toggleText.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    toggleText.TextSize = 18
+    toggleText.Font = CONFIG.UI.FONT
+    toggleText.TextXAlignment = Enum.TextXAlignment.Left
+    toggleText.Parent = toggleFrame
+
+    local toggleButton = Instance.new("ImageButton") -- Changed to ImageButton for icon support
+    toggleButton.Name = "ToggleButton"
+    toggleButton.Size = UDim2.new(0, 40, 0, 25)
+    toggleButton.Position = UDim2.new(0.75, 0, 0, 7.5)
+    toggleButton.BackgroundColor3 = defaultValue and CONFIG.COLORS.SUCCESS or CONFIG.COLORS.BORDER
+    toggleButton.Image = defaultValue and CONFIG.ICONS.CHECK or CONFIG.ICONS.UNCHECK -- Use Image IDs for check/uncheck
+    toggleButton.ImageColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    toggleButton.BackgroundTransparency = 0
     toggleButton.BorderSizePixel = 0
     toggleButton.Parent = toggleFrame
-    
-    Utils.applyCorners(toggleButton, 10)
-    
-    local toggleText = Instance.new("TextLabel")
-    toggleText.Size = UDim2.new(1, 0, 1, 0)
-    toggleText.BackgroundTransparency = 1
-    toggleText.Text = self.settings[settingKey] and "ON" or "OFF"
-    toggleText.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
-    toggleText.TextSize = 12
-    toggleText.Font = Enum.Font.GothamBold
-    toggleText.Parent = toggleFrame
-    
-    toggleButton.MouseButton1Click:Connect(function()
-        self.settings[settingKey] = not self.settings[settingKey] 
-        local isEnabled = self.settings[settingKey]
-        
-        Utils.createTween(toggleFrame, TweenInfo.new(0.3), {
-            BackgroundColor3 = isEnabled and CONFIG.COLORS.SUCCESS or CONFIG.COLORS.BORDER
-        })
-        
-        Utils.createTween(toggleButton, TweenInfo.new(0.3), {
-            Position = isEnabled and UDim2.new(0, 37, 0, 2) or UDim2.new(0, 2, 0, 2)
-        })
-        
-        toggleText.Text = isEnabled and "ON" or "OFF"
-        
-        self:playSound("click")
-        self:handleSettingChange(settingKey, isEnabled)
+    Utils.applyCorners(toggleButton, 12)
+
+    local currentValue = defaultValue
+
+    local function updateToggleVisual(value)
+        if self.settings.animations then
+            Utils.createTween(toggleButton, TweenInfo.new(0.2), {BackgroundColor3 = value and CONFIG.COLORS.SUCCESS or CONFIG.COLORS.BORDER})
+        else
+            toggleButton.BackgroundColor3 = value and CONFIG.COLORS.SUCCESS or CONFIG.COLORS.BORDER
+        end
+        toggleButton.Image = value and CONFIG.ICONS.CHECK or CONFIG.ICONS.UNCHECK
+    end
+
+    self.connections[namePrefix .. "Toggle_Click"] = toggleButton.MouseButton1Click:Connect(function()
+        currentValue = not currentValue
+        updateToggleVisual(currentValue)
+        onChangeCallback(currentValue)
+        self:playSound(currentValue and "toggleOn" or "toggleOff")
+    end)
+
+    self.connections[namePrefix .. "Toggle_MouseEnter"] = toggleButton.MouseEnter:Connect(function()
+        self:playSound("hover")
+        if self.settings.animations then
+            Utils.createTween(toggleButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.2})
+        end
+    end)
+
+    self.connections[namePrefix .. "Toggle_MouseLeave"] = toggleButton.MouseLeave:Connect(function()
+        if self.settings.animations then
+            Utils.createTween(toggleButton, TweenInfo.new(0.2), {BackgroundTransparency = 0})
+        end
+    end)
+end
+
+function NatHubController:createKeybindSelector(parent, text, defaultValue, onChangeCallback)
+    local keybindFrame = Instance.new("Frame")
+    keybindFrame.Name = "KeybindSelectorFrame"
+    keybindFrame.Size = UDim2.new(0.9, 0, 0, 40)
+    keybindFrame.BackgroundTransparency = 1
+    keybindFrame.Parent = parent
+
+    local keybindText = Instance.new("TextLabel")
+    keybindText.Size = UDim2.new(0.7, 0, 1, 0)
+    keybindText.BackgroundTransparency = 1
+    keybindText.Text = text
+    keybindText.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    keybindText.TextSize = 18
+    keybindText.Font = CONFIG.UI.FONT
+    keybindText.TextXAlignment = Enum.TextXAlignment.Left
+    keybindText.Parent = keybindFrame
+
+    local keybindButton = Instance.new("TextButton")
+    keybindButton.Name = "KeybindButton"
+    keybindButton.Size = UDim2.new(0.35, 0, 1, 0)
+    keybindButton.Position = UDim2.new(0.65, 0, 0, 0)
+    keybindButton.BackgroundColor3 = CONFIG.COLORS.HOVER
+    keybindButton.Text = defaultValue.Name
+    keybindButton.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+    keybindButton.TextSize = 16
+    keybindButton.Font = CONFIG.UI.FONT_BOLD
+    keybindButton.BorderSizePixel = 0
+    keybindButton.Parent = keybindFrame
+    Utils.applyCorners(keybindButton, 5)
+
+    local listeningForKey = false
+
+    self.connections.keybindBtn_Click = keybindButton.MouseButton1Click:Connect(function()
+        if not listeningForKey then
+            listeningForKey = true
+            keybindButton.Text = "Press a key..."
+            keybindButton.BackgroundColor3 = CONFIG.COLORS.WARNING
+            self:playSound("click")
+
+            local inputConnection
+            inputConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                if gameProcessed then return end
+                if input.UserInputType == Enum.UserInputType.Keyboard then
+                    listeningForKey = false
+                    keybindButton.Text = input.KeyCode.Name
+                    keybindButton.BackgroundColor3 = CONFIG.COLORS.HOVER
+                    onChangeCallback(input.KeyCode)
+                    self:playSound("click")
+                    inputConnection:Disconnect()
+                end
+            end)
+        end
+    end)
+
+    self.connections.keybindBtn_MouseEnter = keybindButton.MouseEnter:Connect(function()
+        self:playSound("hover")
+        if self.settings.animations and not listeningForKey then
+            Utils.createTween(keybindButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.ACCENT_HOVER})
+        end
+    end)
+
+    self.connections.keybindBtn_MouseLeave = keybindButton.MouseLeave:Connect(function()
+        if self.settings.animations and not listeningForKey then
+            Utils.createTween(keybindButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.COLORS.HOVER})
+        end
     end)
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- INTERACTION SYSTEMS
+-- EVENT HANDLING
 -- ═══════════════════════════════════════════════════════════════
 
-function NatHubController:setupSliderInteraction()
-    local dragging = false
-    local handle = self.components.sliderHandle
-    local track = self.components.sliderTrack
-    local fill = self.components.sliderFill
-    
-    if not handle or not track or not fill then return end
-    
-    handle.MouseButton1Down:Connect(function()
-        dragging = true
-        self:playSound("slide")
-        Utils.createTween(handle, TweenInfo.new(0.1), {Size = UDim2.new(0, 32, 0, 32)})
-    end)
-    
-    local connection = UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and dragging then
-            dragging = false
-            Utils.createTween(handle, TweenInfo.new(0.1), {Size = UDim2.new(0, 28, 0, 28)})
-        end
-    end)
-    table.insert(self.connections, connection)
-    
-    connection = UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local mouse = self.player:GetMouse()
-            local trackPos = track.AbsolutePosition.X
-            local trackSize = track.AbsoluteSize.X
-            local relativePos = math.clamp((mouse.X - trackPos) / trackSize, 0, 1)
-            
-            local speed = Utils.formatNumber(
-                CONFIG.SPEED.MIN + relativePos * (CONFIG.SPEED.MAX - CONFIG.SPEED.MIN),
-                CONFIG.SPEED.PRECISION
-            )
-            
-            self:setSpeed(speed, true)
-        end
-    end)
-    table.insert(self.connections, connection)
-    
-    -- Click on track to jump
-    track.InputBegan:Connect(function(input)
-        if not dragging and input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local relativePos = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-            local speed = Utils.formatNumber(
-                CONFIG.SPEED.MIN + relativePos * (CONFIG.SPEED.MAX - CONFIG.SPEED.MIN),
-                CONFIG.SPEED.PRECISION
-            )
-            self:setSpeed(speed)
-        end
-    end)
-end
-
-function NatHubController:makeDraggable(frame)
-    local dragging = false
-    local dragStart = nil
-    local startPos = nil
-    
-    -- Use topbar for dragging
-    local topBar = self.components.topBar
-    if not topBar then return end
-    
-    topBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            
-            Utils.createTween(frame, TweenInfo.new(0.1), {Size = frame.Size * 0.98})
-        end
-    end)
-    
-    local connection = UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            local newPos = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
-            
-            -- Constrain to screen bounds
-            local viewport = workspace.CurrentCamera.ViewportSize
-            local frameSize = frame.AbsoluteSize
-            
-            newPos = UDim2.new(
-                0, math.clamp(newPos.X.Offset, 0, viewport.X - frameSize.X),
-                0, math.clamp(newPos.Y.Offset, 0, viewport.Y - frameSize.Y)
-            )
-            
-            frame.Position = newPos
-        end
-    end)
-    table.insert(self.connections, connection)
-    
-    connection = UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and dragging then
-            dragging = false
-            Utils.createTween(frame, TweenInfo.new(0.1), {Size = frame.Size / 0.98})
-        end
-    end)
-    table.insert(self.connections, connection)
-end
-
-function NatHubController:setupEventHandlers()
-    -- Keyboard shortcuts
-    local connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+function NatHubController:setupEvents()
+    self.connections.inputBegan = UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then return end
-        
-        if input.KeyCode == Enum.KeyCode.F1 then
-            self:toggleUI()  
-        elseif input.KeyCode == Enum.KeyCode.Escape and self.isVisible then
-            self:hideUI()
+        if input.KeyCode == self.settings.keybind then
+            self:toggleUI()
         end
     end)
-    table.insert(self.connections, connection)
-    
-    -- Handle GUI changes
-    connection = GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(function()
-        self:adjustForTopbar()
-    end)
-    table.insert(self.connections, connection)
-    
-    connection = workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
-        self:adjustForViewport()
-    end)
-    table.insert(self.connections, connection)
-end
 
-function NatHubController:setupCharacterHandling()
-    local function onCharacterAdded(character)
-        if not character then return end
-        
-        local humanoid = character:WaitForChild("Humanoid", 5)
-        if humanoid and self.settings.autoApply then
-            wait(0.2)
-            self:applyAllValues()
+    self.connections.playerAdded = Players.PlayerAdded:Connect(function(player)
+        -- Handle new players if needed (e.g., load settings for them)
+    end)
+
+    self.connections.playerRemoving = Players.PlayerRemoving:Connect(function(player)
+        if player == self.player then
+            self:saveSettings() -- Save settings when player leaves
+            self:cleanup()
         end
-    end
-    
-    if self.player.Character then
-        onCharacterAdded(self.player.Character)
-    end
-    
-    local connection = self.player.CharacterAdded:Connect(onCharacterAdded)
-    table.insert(self.connections, connection)
+    end)
 end
 
 function NatHubController:startUpdateLoop()
-    local connection = RunService.Heartbeat:Connect(function()
-        self:updatePerformanceStats()
-        self:updateUI()
+    self.connections.renderStepped = RunService.RenderStepped:Connect(function()
+        -- Update FPS
+        self.stats.frameCount = self.stats.frameCount + 1
+        local currentTime = tick()
+        if currentTime - self.stats.lastFPSUpdate >= 1 then
+            self.stats.currentFPS = self.stats.frameCount / (currentTime - self.stats.lastFPSUpdate)
+            if self.components.fpsDisplay then
+                self.components.fpsDisplay.Text = "FPS: " .. math.floor(self.stats.currentFPS)
+            end
+            self.stats.frameCount = 0
+            self.stats.lastFPSUpdate = currentTime
+        end
+
+        -- Update Session Time
+        if self.components.sessionTime then
+            local elapsed = math.floor(currentTime - self.stats.sessionStart)
+            local minutes = math.floor(elapsed / 60)
+            local seconds = elapsed % 60
+            self.components.sessionTime.Text = string.format("Session Time: %02d:%02d", minutes, seconds)
+        end
     end)
-    table.insert(self.connections, connection)
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- CORE FUNCTIONALITY
+-- CHARACTER HANDLING
 -- ═══════════════════════════════════════════════════════════════
 
-function NatHubController:setSpeed(speed, silent)
-    local oldSpeed = self.currentSpeed
-    self.currentSpeed = Utils.validateNumber(speed, CONFIG.SPEED.MIN, CONFIG.SPEED.MAX, CONFIG.SPEED.DEFAULT)
-    
-    if oldSpeed ~= self.currentSpeed then
-        self.stats.speedChanges = self.stats.speedChanges + 1
-        
-        -- Apply to character
-        self:applySpeedToCharacter()
-        
-        -- Update UI elements
-        self:updateSpeedUI()
-        
-        -- Play feedback
-        if not silent then
-            self:playSound("slide")
-            self:playSpeedChangeAnimation()
+function NatHubController:setupCharacterHandling()
+    local function onCharacterAdded(character)
+        local humanoid = character:WaitForChild("Humanoid")
+        self.connections.humanoidDied = humanoid.Died:Connect(function()
+            -- Reset settings or handle death if needed
+        end)
+        -- Update initial HipHeight from the character's humanoid
+        self.currentHipHeight = humanoid.HipHeight
+        if self.components.currentHipHeightDisplay then
+            self.components.currentHipHeightDisplay.Text = "Hip Height: " .. string.format("%.1f", self.currentHipHeight)
+        end
+        self:applySpeed(self.currentSpeed) -- Apply initial speed
+        self:applyJumpSettings() -- Apply initial jump settings
+    end
+
+    if self.player.Character then
+        onCharacterAdded(self.player.Character)
+    end
+    self.connections.characterAdded = self.player.CharacterAdded:Connect(onCharacterAdded)
+end
+
+function NatHubController:applySpeed(speed)
+    local character = self.player.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = speed
+            self.stats.speedChanges = self.stats.speedChanges + 1
+            if self.components.speedChanges then
+                self.components.speedChanges.Text = "Speed Changes: " .. self.stats.speedChanges
+            end
         end
     end
 end
 
-function NatHubController:setJumpPower(power)
-    self.currentJumpPower = Utils.validateNumber(power, 1, 200, 50)
-    self:applyJumpPowerToCharacter()
-    self:updateJumpUI()
-end
-
-function NatHubController:setJumpHeight(height)
-    self.currentJumpHeight = Utils.validateNumber(height, 1, 50, 7.2)
-    self:applyJumpHeightToCharacter()
-    self:updateJumpUI()
-end
-
-function NatHubController:setHipHeight(height)
-    local hipHeight = Utils.validateNumber(height, 0, 10, 0)
-    self:applyHipHeightToCharacter(hipHeight)
-end
-
-function NatHubController:applySpeedToCharacter()
-    if self.player.Character and self.player.Character:FindFirstChild("Humanoid") then
-        self.player.Character.Humanoid.WalkSpeed = self.currentSpeed
-    end
-end
-
-function NatHubController:applyJumpPowerToCharacter()
-    if self.player.Character and self.player.Character:FindFirstChild("Humanoid") then
-        self.player.Character.Humanoid.JumpPower = self.currentJumpPower
-    end
-end
-
-function NatHubController:applyJumpHeightToCharacter()
-    if self.player.Character and self.player.Character:FindFirstChild("Humanoid") then
-        self.player.Character.Humanoid.JumpHeight = self.currentJumpHeight
-    end
-end
-
-function NatHubController:applyHipHeightToCharacter(height)
-    if self.player.Character and self.player.Character:FindFirstChild("Humanoid") then
-        self.player.Character.Humanoid.HipHeight = height
-    end
-end
-
-function NatHubController:applyAllValues()
-    self:applySpeedToCharacter()
-    self:applyJumpPowerToCharacter()
-    self:applyJumpHeightToCharacter()
-end
-
-function NatHubController:switchPage(pageName)
-    if self.currentPage == pageName then return end
-    
-    -- Hide current page
-    if self.pages[self.currentPage] then
-        self.pages[self.currentPage].Visible = false
-    end
-    
-    -- Update menu item states
-    self:updateMenuItemState(self.currentPage, false)
-    self:updateMenuItemState(pageName, true)
-    
-    -- Show new page
-    self.currentPage = pageName
-    if self.pages[pageName] then
-        self.pages[pageName].Visible = true
-    end
-end
-
-function NatHubController:updateMenuItemState(pageName, isSelected)
-    local menuItem = self.components[pageName .. "MenuItem"]
-    local icon = self.components[pageName .. "Icon"]
-    local text = self.components[pageName .. "Text"]
-    local indicator = self.components[pageName .. "Indicator"]
-    
-    if menuItem and icon and text and indicator then
-        Utils.createTween(menuItem, TweenInfo.new(0.3), {
-            BackgroundTransparency = isSelected and 0 or 1
-        })
-        
-        Utils.createTween(icon, TweenInfo.new(0.3), {
-            ImageColor3 = isSelected and CONFIG.COLORS.ACCENT or CONFIG.COLORS.TEXT_SECONDARY
-        })
-        
-        Utils.createTween(text, TweenInfo.new(0.3), {
-            TextColor3 = isSelected and CONFIG.COLORS.TEXT_PRIMARY or CONFIG.COLORS.TEXT_SECONDARY
-        })
-        
-        indicator.Visible = isSelected
-    end
-end
-
-function NatHubController:updateSpeedUI()
-    if self.components.speedValue then
-        self.components.speedValue.Text = tostring(self.currentSpeed)
-    end
-    
-    if self.components.speedInput and not self.components.speedInput:IsFocused() then
-        self.components.speedInput.Text = tostring(self.currentSpeed)
-    end
-    
-    self:updateSliderPosition()
-end
-
-function NatHubController:updateJumpUI()
-    -- Update jump card titles
-    local jumpPowerCard = self.components.JumpPowerCard
-    local jumpHeightCard = self.components.JumpHeightCard
-    
-    if jumpPowerCard then
-        local title = jumpPowerCard:FindFirstChild("CardTitle")
-        if title then
-            title.Text = "Jump Power: " .. self.currentJumpPower
+function NatHubController:applyJumpSettings()
+    local character = self.player.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.JumpPower = self.currentJumpPower
+            humanoid.JumpHeight = self.currentJumpHeight
+            humanoid.HipHeight = self.currentHipHeight
+            self.stats.jumpChanges = self.stats.jumpChanges + 1
+            if self.components.jumpChanges then
+                self.components.jumpChanges.Text = "Jump Changes: " .. self.stats.jumpChanges
+            end
         end
-    end
-    
-    if jumpHeightCard then
-        local title = jumpHeightCard:FindFirstChild("CardTitle")
-        if title then
-            title.Text = "Jump Height: " .. self.currentJumpHeight
-        end
-    end
-end
-
-function NatHubController:updateSliderPosition()
-    if not self.components.sliderHandle or not self.components.sliderFill then return end
-    
-    local relativePos = (self.currentSpeed - CONFIG.SPEED.MIN) / (CONFIG.SPEED.MAX - CONFIG.SPEED.MIN)
-    
-    Utils.createTween(self.components.sliderHandle, TweenInfo.new(0.2), {
-        Position = UDim2.new(relativePos, -14, 0.5, -14)
-    })
-    
-    Utils.createTween(self.components.sliderFill, TweenInfo.new(0.2), {
-        Size = UDim2.new(relativePos, 0, 1, 0)
-    })
-end
-
-function NatHubController:updatePerformanceStats()
-    self.stats.frameCount = self.stats.frameCount + 1
-    local currentTime = tick()
-    
-    if currentTime - self.stats.lastFPSUpdate >= 1 then
-        self.stats.currentFPS = self.stats.frameCount
-        self.stats.frameCount = 0
-        self.stats.lastFPSUpdate = currentTime
-        
-        -- Update stat labels
-        if self.components.fpsLabel then
-            self.components.fpsLabel.Text = "FPS: " .. self.stats.currentFPS
-        end
-        
-        if self.components.pingLabel then
-            -- Approximate ping calculation
-            self.stats.ping = math.random(10, 150)
-            self.components.pingLabel.Text = "Ping: " .. self.stats.ping .. "ms"
-        end
-        
-        if self.components.memoryLabel then
-            self.stats.memory = math.floor(collectgarbage("count") / 1024)
-            self.components.memoryLabel.Text = "Memory: " .. self.stats.memory .. "MB"
-        end
-        
-        if self.components.speedChangesLabel then
-            self.components.speedChangesLabel.Text = "Speed Changes: " .. self.stats.speedChanges
-        end
-        
-        if self.components.sessionLabel then
-            local sessionTime = math.floor(currentTime - self.stats.sessionStart)
-            self.components.sessionLabel.Text = "Session: " .. sessionTime .. "s"
-        end
-        
-        if self.components.currentTimeLabel then
-            self.components.currentTimeLabel.Text = "Current Time: " .. os.date("%H:%M:%S")
-        end
-    end
-end
-
-function NatHubController:updateUI()
-    -- Update current speed display
-    if self.components.speedValue then
-        self.components.speedValue.Text = tostring(self.currentSpeed)
     end
 end
 
 -- ═══════════════════════════════════════════════════════════════
--- UI CONTROL METHODS
+-- UI ANIMATIONS & VISIBILITY
 -- ═══════════════════════════════════════════════════════════════
 
 function NatHubController:toggleUI()
@@ -1849,90 +1389,267 @@ end
 
 function NatHubController:showUI()
     if self.isVisible then return end
-    
     self.isVisible = true
-    
-    Utils.createTween(self.components.mainFrame,
-        TweenInfo.new(CONFIG.UI.ANIMATION_SPEED, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-        {Position = UDim2.new(0.5, -CONFIG.UI.MAIN_SIZE.X/2, 0.5, -CONFIG.UI.MAIN_SIZE.Y/2)}
-    )
-    
     self:playSound("open")
+    local mainFrame = self.components.mainFrame
+    if self.settings.animations then
+        Utils.createTween(mainFrame, TweenInfo.new(CONFIG.UI.ANIMATION_SPEED, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, -CONFIG.UI.MAIN_SIZE.X/2, 0.5, -CONFIG.UI.MAIN_SIZE.Y/2)
+        })
+    else
+        mainFrame.Position = UDim2.new(0.5, -CONFIG.UI.MAIN_SIZE.X/2, 0.5, -CONFIG.UI.MAIN_SIZE.Y/2)
+    end
+    self.components.toggleButton.Visible = false -- Hide toggle button when UI is open
 end
 
 function NatHubController:hideUI()
     if not self.isVisible then return end
-    
     self.isVisible = false
-    
-    Utils.createTween(self.components.mainFrame,
-        TweenInfo.new(CONFIG.UI.ANIMATION_SPEED, Enum.EasingStyle.Back, Enum.EasingDirection.In),
-        {Position = UDim2.new(0.5, -CONFIG.UI.MAIN_SIZE.X/2, -1, -50)}
-    )
-    
     self:playSound("close")
-end
-
-function NatHubController:adjustForTopbar()
-    local topbarInset = GuiService:GetGuiInset()
-    if self.isVisible then
-        local currentPos = self.components.mainFrame.Position
-        self.components.mainFrame.Position = UDim2.new(
-            currentPos.X.Scale, currentPos.X.Offset,
-            currentPos.Y.Scale, math.max(currentPos.Y.Offset, topbarInset.Y + 10)
-        )
+    local mainFrame = self.components.mainFrame
+    if self.settings.animations then
+        Utils.createTween(mainFrame, TweenInfo.new(CONFIG.UI.ANIMATION_SPEED, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Position = UDim2.new(0.5, -CONFIG.UI.MAIN_SIZE.X/2, -1, 0)
+        }, function()
+            self.components.toggleButton.Visible = true -- Show toggle button when UI is closed
+        end)
+    else
+        mainFrame.Position = UDim2.new(0.5, -CONFIG.UI.MAIN_SIZE.X/2, -1, 0)
+        self.components.toggleButton.Visible = true
     end
 end
 
-function NatHubController:adjustForViewport()
-    if not self.isVisible then return end
-    
-    local viewport = workspace.CurrentCamera.ViewportSize
-    local framePos = self.components.mainFrame.Position
-    local frameSize = self.components.mainFrame.AbsoluteSize
-    
-    local newPos = UDim2.new(
-        0, math.clamp(framePos.X.Offset, 10, viewport.X - frameSize.X - 10),
-        0, math.clamp(framePos.Y.Offset, 10, viewport.Y - frameSize.Y - 10)
-    )
-    
-    if newPos ~= framePos then
-        Utils.createTween(self.components.mainFrame, TweenInfo.new(0.3), {Position = newPos})
+function NatHubController:switchPage(pageName)
+    if self.currentPage == pageName then return end
+
+    -- Animate out current page
+    local currentPageFrame = self.pages[self.currentPage]
+    if currentPageFrame and self.settings.animations then
+        Utils.createTween(currentPageFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1, Position = UDim2.new(-1, 0, 0, 0)}, function()
+            currentPageFrame.Visible = false
+            currentPageFrame.Position = UDim2.new(0,0,0,0) -- Reset position for next time
+        end)
+    elseif currentPageFrame then
+        currentPageFrame.Visible = false
     end
-end
 
--- ═══════════════════════════════════════════════════════════════
--- ANIMATION METHODS
--- ═══════════════════════════════════════════════════════════════
+    -- Update sidebar selection visuals
+    if self.components[self.currentPage .. "MenuItem"] then
+        local oldMenuItem = self.components[self.currentPage .. "MenuItem"]
+        local oldIcon = self.components[self.currentPage .. "Icon"]
+        local oldText = self.components[self.currentPage .. "Text"]
+        local oldIndicator = self.components[self.currentPage .. "Indicator"]
 
-function NatHubController:playButtonAnimation(button)
-    local originalSize = button.Size
-    local shrinkTween = Utils.createTween(button,
-        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-        {Size = originalSize * 0.9}
-    )
-    
-    shrinkTween.Completed:Connect(function()
-        Utils.createTween(button,
-            TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-            {Size = originalSize * 1.05},
-            function()
-                Utils.createTween(button,
-                    TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                    {Size = originalSize}
-                )
-            end
-        )
+        if self.settings.animations then
+            Utils.createTween(oldMenuItem, TweenInfo.new(0.2), {BackgroundTransparency = 1, BackgroundColor3 = Color3.fromRGB(0,0,0)})
+            Utils.createTween(oldIcon, TweenInfo.new(0.2), {ImageColor3 = CONFIG.COLORS.TEXT_SECONDARY})
+            Utils.createTween(oldText, TweenInfo.new(0.2), {TextColor3 = CONFIG.COLORS.TEXT_SECONDARY})
+            Utils.createTween(oldIndicator, TweenInfo.new(0.2), {Size = UDim2.new(0,0,0.8,0)})
+        else
+            oldMenuItem.BackgroundTransparency = 1
+            oldMenuItem.BackgroundColor3 = Color3.fromRGB(0,0,0)
+            oldIcon.ImageColor3 = CONFIG.COLORS.TEXT_SECONDARY
+            oldText.TextColor3 = CONFIG.COLORS.TEXT_SECONDARY
+            oldIndicator.Size = UDim2.new(0,0,0.8,0)
+        end
+        oldIndicator.Visible = false
+    end
+
+    self.currentPage = pageName
+
+    -- Animate in new page
+    local newPageFrame = self.pages[pageName]
+    if newPageFrame then
+        newPageFrame.Visible = true
+        if self.settings.animations then
+            newPageFrame.Position = UDim2.new(1, 0, 0, 0) -- Start off-screen to the right
+            Utils.createTween(newPageFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 0)})
+        else
+            newPageFrame.Position = UDim2.new(0,0,0,0)
+        end
+    end
+
+    -- Update new sidebar selection visuals
+    if self.components[pageName .. "MenuItem"] then
+        local newMenuItem = self.components[pageName .. "MenuItem"]
+        local newIcon = self.components[pageName .. "Icon"]
+        local newText = self.components[pageName .. "Text"]
+        local newIndicator = self.components[pageName .. "Indicator"]
+
+        if self.settings.animations then
+            Utils.createTween(newMenuItem, TweenInfo.new(0.2), {BackgroundTransparency = 0, BackgroundColor3 = CONFIG.COLORS.SELECTED})
+            Utils.createTween(newIcon, TweenInfo.new(0.2), {ImageColor3 = CONFIG.COLORS.ACCENT})
+            Utils.createTween(newText, TweenInfo.new(0.2), {TextColor3 = CONFIG.COLORS.TEXT_PRIMARY})
+            newIndicator.Visible = true
+            Utils.createTween(newIndicator, TweenInfo.new(0.2), {Size = UDim2.new(0,4,0.8,0)})
+        else
+            newMenuItem.BackgroundTransparency = 0
+            newMenuItem.BackgroundColor3 = CONFIG.COLORS.SELECTED
+            newIcon.ImageColor3 = CONFIG.COLORS.ACCENT
+            newText.TextColor3 = CONFIG.COLORS.TEXT_PRIMARY
+            newIndicator.Visible = true
+            newIndicator.Size = UDim2.new(0,4,0.8,0)
+        end
+    end
+
+    -- Adjust content area canvas size based on current page content
+    task.spawn(function()
+        task.wait(0.1) -- Give UI a moment to render
+        if newPageFrame then
+            local contentHeight = newPageFrame.AbsoluteContentSize.Y
+            self.components.contentArea.CanvasSize = UDim2.new(0, 0, 0, math.max(contentHeight + 50, self.components.contentArea.AbsoluteSize.Y))
+        end
     end)
 end
 
-function NatHubController:playSpeedChangeAnimation()
-    if self.components.speedValue then
-        local originalColor = self.components.speedValue.TextColor3
-        
-        Utils.createTween(self.components.speedValue,
-            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {TextColor3 = CONFIG.COLORS.SUCCESS},
-            function()
-                Utils.createTween(self.components.speedValue,
-                    TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out
+function NatHubController:playSound(soundName)
+    if self.settings.soundEnabled and self.sounds[soundName] then
+        self.sounds[soundName]:Play()
+    end
+end
+
+function NatHubController:makeDraggable(frame)
+    local dragStart
+    local startPosition
+
+    self.connections.dragInputBegan = frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self.isDragging = true
+            dragStart = input.Position
+            startPosition = frame.Position
+
+            self.connections.dragInputChanged = UserInputService.InputChanged:Connect(function(inputChanged)
+                if self.isDragging and (inputChanged.UserInputType == Enum.UserInputType.MouseMovement or inputChanged.UserInputType == Enum.UserInputType.Touch) then
+                    local delta = inputChanged.Position - dragStart
+                    local newX = startPosition.X.Offset + delta.X
+                    local newY = startPosition.Y.Offset + delta.Y
+
+                    -- Clamp to screen bounds
+                    local maxX = self.playerGui.AbsoluteSize.X - frame.AbsoluteSize.X
+                    local maxY = self.playerGui.AbsoluteSize.Y - frame.AbsoluteSize.Y
+
+                    newX = math.clamp(newX, 0, maxX)
+                    newY = math.clamp(newY, 0, maxY)
+
+                    frame.Position = UDim2.new(0, newX, 0, newY)
+                end
+            end)
+        end
+    end)
+
+    self.connections.dragInputEnded = frame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self.isDragging = false
+            if self.connections.dragInputChanged then
+                self.connections.dragInputChanged:Disconnect()
+                self.connections.dragInputChanged = nil
+            end
+        end
+    end)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- DATA PERSISTENCE (SETTINGS)
+-- ═══════════════════════════════════════════════════════════════
+
+function NatHubController:loadSettings()
+    if not self.settings.saveSettings then return end
+    local settingsStore = DataStoreService:GetDataStore("NatHubSettings_" .. self.player.UserId)
+    local success, loadedData = pcall(function()
+        return settingsStore:GetAsync("user_settings")
+    end)
+
+    if success and loadedData then
+        for k, v in pairs(loadedData) do
+            if self.settings[k] ~= nil then -- Only load known settings
+                if k == "keybind" and type(v) == "string" then
+                    -- Convert string back to Enum.KeyCode
+                    local success, keyCode = pcall(function() return Enum.KeyCode[v] end)
+                    if success and keyCode then
+                        self.settings[k] = keyCode
+                    else
+                        warn("Failed to load keybind: " .. v)
+                    end
+                else
+                    self.settings[k] = v
+                end
+            end
+        end
+        print("Settings loaded successfully!")
+    else
+        warn("Failed to load settings or no settings found: ", loadedData)
+    end
+end
+
+function NatHubController:saveSettings()
+    if not self.settings.saveSettings then return end
+    local settingsStore = DataStoreService:GetDataStore("NatHubSettings_" .. self.player.UserId)
+    local dataToSave = {}
+    for k, v in pairs(self.settings) do
+        if k == "keybind" then
+            dataToSave[k] = v.Name -- Save KeyCode as string
+        else
+            dataToSave[k] = v
+        end
+    end
+
+    local success, err = pcall(function()
+        settingsStore:SetAsync("user_settings", dataToSave)
+    end)
+
+    if success then
+        print("Settings saved successfully!")
+    else
+        warn("Failed to save settings: ", err)
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- CLEANUP
+-- ═══════════════════════════════════════════════════════════════
+
+function NatHubController:cleanup()
+    -- Disconnect all connections
+    for _, connection in pairs(self.connections) do
+        if connection and typeof(connection) == "RBXScriptConnection" then
+            connection:Disconnect()
+        end
+    end
+    self.connections = {}
+
+    -- Stop all tweens
+    for _, tween in pairs(self.tweens) do
+        if tween and typeof(tween) == "Tween" then
+            tween:Cancel()
+        end
+    end
+    self.tweens = {}
+
+    -- Destroy UI
+    if self.components.screenGui then
+        self.components.screenGui:Destroy()
+    end
+    self.components = {}
+
+    -- Destroy sounds
+    for _, sound in pairs(self.sounds) do
+        if sound and typeof(sound) == "Sound" then
+            sound:Destroy()
+        end
+    end
+    self.sounds = {}
+
+    print("NatHub Character Controller cleaned up.")
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- INITIALIZATION
+-- ═══════════════════════════════════════════════════════════════
+
+local controller = NatHubController.new()
+
+-- Optional: Add a game.Players.PlayerRemoving event to call controller:cleanup() if the script is not a LocalScript
+-- For a LocalScript, the cleanup will happen automatically when the player leaves.
+
+```
+
